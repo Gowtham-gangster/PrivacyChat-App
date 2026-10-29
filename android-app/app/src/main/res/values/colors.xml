@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- PrivyChat Original Branding: Deep Obsidian Slate with Electric Teal Accent -->
+    <color name="privy_primary">#0D9488</color>
+    <color name="privy_primary_variant">#14B8A6</color>
+    <color name="privy_secondary">#0EA5E9</color>
+    <color name="privy_secondary_variant">#38BDF8</color>
+
+    <!-- Dark Theme (Default) -->
+    <color name="privy_dark_background">#0F172A</color>
+    <color name="privy_dark_surface">#1E293B</color>
+    <color name="privy_dark_surface_variant">#334155</color>
+    <color name="privy_dark_text_primary">#F8FAFC</color>
+    <color name="privy_dark_text_secondary">#94A3B8</color>
+
+    <!-- Light Theme -->
+    <color name="privy_light_background">#F8FAFC</color>
+    <color name="privy_light_surface">#FFFFFF</color>
+    <color name="privy_light_surface_variant">#E2E8F0</color>
+    <color name="privy_light_text_primary">#0F172A</color>
+    <color name="privy_light_text_secondary">#64748B</color>
+
+    <!-- Ticks & Status Badges -->
+    <color name="privy_tick_sent">#94A3B8</color>
+    <color name="privy_tick_delivered">#CBD5E1</color>
+    <color name="privy_tick_read">#38BDF8</color>
+    <color name="privy_online_green">#10B981</color>
+    <color name="privy_error_red">#EF4444</color>
+</resources>
+

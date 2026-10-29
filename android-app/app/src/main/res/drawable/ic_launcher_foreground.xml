@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Security Shield Foreground for PrivyChat -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M54,28 L34,36 L34,50 C34,63 42.5,75 54,78 C65.5,75 74,63 74,50 L74,36 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,42 C51.8,42 50,43.8 50,46 L50,49 L48,49 C46.9,49 46,49.9 46,51 L46,61 C46,62.1 46.9,63 48,63 L60,63 C61.1,63 62,62.1 62,61 L62,51 C62,49.9 61.1,49 60,49 L58,49 L58,46 C58,43.8 56.2,42 54,42 Z M54,44 C55.1,44 56,44.9 56,46 L56,49 L52,49 L52,46 C52,44.9 52.9,44 54,44 Z" />
+</vector>
+

@@ -1,0 +1,61 @@
+# PrivyChat Monorepo .gitignore
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+secrets/
+credentials/
+google-services.json
+
+# Java & Backend
+target/
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Android & Gradle
+.gradle/
+build/
+app/build/
+android-app/.gradle/
+android-app/build/
+android-app/app/build/
+local.properties
+.cxx/
+*.apk
+*.aab
+
+# IDE & OS
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & Diagnostics
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Database & Storage
+data/
+minio_data/
+postgres_data/
+

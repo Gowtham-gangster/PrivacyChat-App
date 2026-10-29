@@ -1,0 +1,89 @@
+spring:
+  application:
+    name: privychat-backend
+  profiles:
+    active: dev
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/privychat}
+    username: ${DATABASE_USERNAME:privychat_user}
+    password: ${DATABASE_PASSWORD:privychat_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 20000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  mail:
+    host: ${SMTP_HOST:smtp.mailtrap.io}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:user}
+    password: ${SMTP_PASSWORD:pass}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            enable: ${SMTP_STARTTLS_ENABLE:true}
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+
+privychat:
+  app-base-url: ${APP_BASE_URL:http://localhost:8080}
+  apk-download-url: ${APK_DOWNLOAD_URL:https://privychat.example.com/download/privychat-release.apk}
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    access-expiration-minutes: 15
+    refresh-expiration-days: 30
+    issuer: ${AUTH_ISSUER:https://privychat.example.com}
+  storage:
+    type: ${STORAGE_TYPE:local} # local or s3
+    local-dir: ${STORAGE_LOCAL_DIR:./storage-attachments}
+    s3-bucket: ${OBJECT_STORAGE_BUCKET:privychat-encrypted-attachments}
+    s3-endpoint: ${OBJECT_STORAGE_ENDPOINT:http://localhost:9000}
+    s3-access-key: ${OBJECT_STORAGE_ACCESS_KEY:minioadmin}
+    s3-secret-key: ${OBJECT_STORAGE_SECRET_KEY:minioadmin}
+  mail:
+    from-address: ${MAIL_FROM_ADDRESS:noreply@privychat.example.com}
+    from-name: ${MAIL_FROM_NAME:PrivyChat Security}
+  fcm:
+    enabled: ${FCM_ENABLED:false}
+    project-id: ${FCM_PROJECT_ID:privychat}
+    credentials-path: ${FCM_CREDENTIALS_PATH:/etc/privychat/firebase.json}
+  webrtc:
+    stun-server: ${STUN_SERVER_URL:stun:stun.l.google.com:19302}
+    turn-server: ${TURN_SERVER_URL:turn:turn.privychat.example.com:3478}
+    turn-username: ${TURN_SERVER_USERNAME:privychat_turn_user}
+    turn-secret: ${TURN_SERVER_CREDENTIAL:turn_secret}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+

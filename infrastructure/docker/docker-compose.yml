@@ -1,0 +1,105 @@
+services:
+  # Primary Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: privychat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-privychat}
+      POSTGRES_USER: ${POSTGRES_USER:-privychat_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMeSecurePassword123!}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-privychat_admin} -d ${POSTGRES_DB:-privychat}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Private Encrypted Object Storage (MinIO S3-Compatible)
+  minio:
+    image: minio/minio:RELEASE.2024-05-10T01-41-38Z
+    container_name: privychat-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-privychat_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-ChangeMeSecureMinioPassword123!}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Coturn STUN/TURN Server for WebRTC NAT Traversal
+  coturn:
+    image: coturn/coturn:4.6.2-alpine
+    container_name: privychat-coturn
+    restart: unless-stopped
+    ports:
+      - "3478:3478/tcp"
+      - "3478:3478/udp"
+      - "5349:5349/tcp"
+      - "5349:5349/udp"
+      - "49152-49200:49152-49200/udp"
+    volumes:
+      - ../coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    network_mode: "host"
+
+  # PrivyChat Backend API Service
+  backend:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.backend
+    container_name: privychat-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-privychat}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-privychat_admin}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMeSecurePassword123!}
+      JWT_SECRET: ${JWT_SECRET:-9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b}
+      STORAGE_LOCAL_DIRECTORY: /app/storage
+      SMTP_HOST: ${SMTP_HOST:-smtp.example.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-noreply@privychat.app}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-secret}
+      FCM_CREDENTIALS_PATH: ${FCM_CREDENTIALS_PATH:-/app/secrets/fcm-service-account.json}
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend_storage:/app/storage
+
+  # Reverse Proxy & APK Distribution Web Server
+  nginx:
+    image: nginx:1.26-alpine
+    container_name: privychat-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../distribution:/usr/share/nginx/html/download:ro
+      - certs:/etc/nginx/certs:ro
+
+volumes:
+  pgdata:
+  miniodata:
+  backend_storage:
+  certs:
+

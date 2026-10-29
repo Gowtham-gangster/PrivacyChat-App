@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/privychat}
+    username: ${DATABASE_USERNAME:privychat_user}
+    password: ${DATABASE_PASSWORD:privychat_password}
+  jpa:
+    show-sql: false
+  flyway:
+    enabled: true
+

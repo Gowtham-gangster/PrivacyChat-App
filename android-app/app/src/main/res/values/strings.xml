@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">PrivyChat</string>
+    <string name="app_tagline">Zero-knowledge, one-to-one secure messaging</string>
+
+    <!-- Onboarding -->
+    <string name="welcome_title">Private. Encrypted. Yours.</string>
+    <string name="welcome_subtitle">No group chats, no data harvesting. Just secure one-to-one communication.</string>
+    <string name="get_started">Get Started</string>
+    <string name="login_title">Welcome Back</string>
+    <string name="register_title">Create Account</string>
+    <string name="display_name_hint">Display Name</string>
+    <string name="email_hint">Email Address</string>
+    <string name="phone_hint">Mobile Number (e.g. +12025550143)</string>
+    <string name="password_hint">Password (min 8 characters)</string>
+    <string name="terms_checkbox">I accept the Privacy Policy and Zero-Knowledge Terms</string>
+    <string name="verify_email_title">Verify Email</string>
+    <string name="verify_phone_title">Verify Phone Number</string>
+    <string name="otp_hint">6-Digit Code</string>
+    <string name="verify_btn">Verify &amp; Continue</string>
+
+    <!-- Dashboard -->
+    <string name="chats_title">Chats</string>
+    <string name="contacts_title">Contacts</string>
+    <string name="settings_title">Settings</string>
+    <string name="search_chats">Search conversations…</string>
+    <string name="no_chats_title">No Conversations Yet</string>
+    <string name="no_chats_subtitle">Start a secure one-to-one conversation with a registered contact or send an invite.</string>
+
+    <!-- Chat Screen -->
+    <string name="type_message_hint">Type an encrypted message…</string>
+    <string name="safety_number_title">Safety Number Verification</string>
+    <string name="safety_number_desc">Compare this 60-digit safety number with your contact or scan their QR code to verify end-to-end encryption integrity.</string>
+    <string name="disappearing_messages_title">Disappearing Messages</string>
+
+    <!-- Calling -->
+    <string name="voice_call">Voice Call</string>
+    <string name="video_call">Video Call</string>
+    <string name="incoming_call">Incoming Call…</string>
+    <string name="calling">Calling…</string>
+    <string name="ringing">Ringing…</string>
+    <string name="call_connected">Connected</string>
+    <string name="end_call">End Call</string>
+    <string name="answer_call">Answer</string>
+    <string name="decline_call">Decline</string>
+
+    <!-- Settings -->
+    <string name="profile_section">Profile &amp; Identity</string>
+    <string name="privacy_section">Privacy Controls</string>
+    <string name="security_section">Security &amp; Encryption Keys</string>
+    <string name="read_receipts">Read Receipts</string>
+    <string name="last_seen">Last Seen &amp; Online Status</string>
+    <string name="blocked_users">Blocked Contacts</string>
+    <string name="logout">Log Out</string>
+    <string name="delete_account">Delete Account &amp; Shred Data</string>
+</resources>
+
