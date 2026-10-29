@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,12 +17,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/attachments")
-@Tag(name = "Attachments", description = "Encrypted media and document storage authorization and retrieval")
+@Tag(name = "Attachments", description = "Encrypted media and document storage authorization, streaming, and deletion")
 public class AttachmentController {
 
     private final AttachmentStorageService storageService;
@@ -58,17 +57,26 @@ public class AttachmentController {
     }
 
     @GetMapping("/{attachmentId}/file")
-    @Operation(summary = "Stream encrypted attachment bytes")
+    @Operation(summary = "Stream encrypted attachment bytes (proxied securely from storage)")
     public ResponseEntity<Resource> downloadFile(
             @PathVariable UUID attachmentId,
-            @AuthenticationPrincipal UUID userId) {
-        Path filePath = storageService.getFilePath(attachmentId);
-        Resource resource = new FileSystemResource(filePath.toFile());
+            @AuthenticationPrincipal UUID userId) throws IOException {
+        byte[] bytes = storageService.downloadBytes(attachmentId, userId);
+        Resource resource = new ByteArrayResource(bytes);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(bytes.length)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachmentId + ".bin\"")
                 .body(resource);
     }
-}
 
+    @DeleteMapping("/{attachmentId}")
+    @Operation(summary = "Delete an attachment from storage and database (authorized participants only)")
+    public ResponseEntity<Void> deleteAttachment(
+            @PathVariable UUID attachmentId,
+            @AuthenticationPrincipal UUID userId) {
+        storageService.deleteAttachment(attachmentId, userId);
+        return ResponseEntity.noContent().build();
+    }
+}

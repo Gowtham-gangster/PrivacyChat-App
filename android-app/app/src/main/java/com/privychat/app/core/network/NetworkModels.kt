@@ -177,6 +177,7 @@ data class MessageReceiptDto(
 
 data class AttachmentUploadRequestDto(
     val messageId: UUID?,
+    val conversationId: UUID? = null,
     val fileSizeBytes: Long,
     val sha256Checksum: String,
     val mimeType: String
@@ -191,6 +192,8 @@ data class AttachmentUploadResponseDto(
 data class AttachmentDownloadResponseDto(
     val attachmentId: UUID,
     val downloadUrl: String,
+    val signedUrl: String? = null,
+    val expiresInSeconds: Int? = null,
     val fileSizeBytes: Long,
     val sha256Checksum: String,
     val mimeType: String

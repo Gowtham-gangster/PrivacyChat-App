@@ -20,4 +20,9 @@ privychat:
   storage:
     type: local
     local-dir: ./target/test-storage
+    supabase:
+      url: ""
+      service-role-key: ""
+      bucket-name: privychat-attachments
+      signed-url-expiration: 300
 

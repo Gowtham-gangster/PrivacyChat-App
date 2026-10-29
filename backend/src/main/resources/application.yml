@@ -53,12 +53,13 @@ privychat:
     refresh-expiration-days: 30
     issuer: ${AUTH_ISSUER:https://privychat.example.com}
   storage:
-    type: ${STORAGE_TYPE:local} # local or s3
+    type: ${STORAGE_TYPE:supabase} # supabase or local
     local-dir: ${STORAGE_LOCAL_DIR:./storage-attachments}
-    s3-bucket: ${OBJECT_STORAGE_BUCKET:privychat-encrypted-attachments}
-    s3-endpoint: ${OBJECT_STORAGE_ENDPOINT:http://localhost:9000}
-    s3-access-key: ${OBJECT_STORAGE_ACCESS_KEY:minioadmin}
-    s3-secret-key: ${OBJECT_STORAGE_SECRET_KEY:minioadmin}
+    supabase:
+      url: ${SUPABASE_URL:}
+      service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+      bucket-name: ${SUPABASE_BUCKET_NAME:privychat-attachments}
+      signed-url-expiration: ${SUPABASE_SIGNED_URL_EXPIRATION:300}
   mail:
     from-address: ${MAIL_FROM_ADDRESS:noreply@privychat.example.com}
     from-name: ${MAIL_FROM_NAME:PrivyChat Security}

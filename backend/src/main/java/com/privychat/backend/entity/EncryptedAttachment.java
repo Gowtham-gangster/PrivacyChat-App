@@ -13,6 +13,10 @@ public class EncryptedAttachment {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "conversation_id")
+    private Conversation conversation;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "message_id")
     private Message message;
 
@@ -46,8 +50,21 @@ public class EncryptedAttachment {
         this.createdAt = Instant.now();
     }
 
+    public EncryptedAttachment(Conversation conversation, User uploader, String storagePath, long fileSizeBytes, String sha256Checksum, String mimeType) {
+        this.conversation = conversation;
+        this.uploader = uploader;
+        this.storagePath = storagePath;
+        this.fileSizeBytes = fileSizeBytes;
+        this.sha256Checksum = sha256Checksum;
+        this.mimeType = mimeType;
+        this.createdAt = Instant.now();
+    }
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
+
+    public Conversation getConversation() { return conversation; }
+    public void setConversation(Conversation conversation) { this.conversation = conversation; }
 
     public Message getMessage() { return message; }
     public void setMessage(Message message) { this.message = message; }
@@ -70,4 +87,3 @@ public class EncryptedAttachment {
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }
-

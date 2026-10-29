@@ -151,14 +151,14 @@ sequenceDiagram
 
 ---
 
-### C. Private Media Attachment Sharing Flow
+### C. Private Media Attachment Sharing Flow (Supabase Storage)
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant Alice as Sender (Alice)
     participant Server as PrivyChat Backend
-    participant Storage as Object Storage (S3/MinIO)
+    participant Storage as Supabase Storage (privychat-attachments)
     participant Bob as Recipient (Bob)
 
     Alice->>Alice: User selects image / video / document
@@ -166,24 +166,32 @@ sequenceDiagram
     Alice->>Alice: Encrypt file bytes locally -> Ciphertext
     Alice->>Alice: Compute SHA-256 digest of ciphertext
     
-    Alice->>Server: POST /api/v1/attachments/upload-request {size, sha256Digest, mimeType: application/octet-stream}
-    Server-->>Alice: Returns uploadUrl (Pre-signed PUT / authorized token) and attachmentId
+    Alice->>Server: POST /api/v1/attachments/upload-request {conversationId, size, sha256Digest, mimeType}
+    Server->>Server: Verify Alice is authorized participant in conversation
+    Server-->>Alice: Returns uploadUrl and attachmentId
     
-    Alice->>Storage: PUT /attachments/{attachmentId} with Ciphertext
-    Storage-->>Alice: 200 OK
+    Alice->>Server: PUT /api/v1/attachments/{attachmentId}/upload (Stream raw ciphertext)
+    Server->>Server: Verify streaming SHA-256 checksum & 50MB file size limit
+    Server->>Storage: Store ciphertext in private bucket 'privychat-attachments'
+    Storage-->>Server: 200 OK
+    Server-->>Alice: 200 OK
     
     Alice->>Alice: Construct media metadata envelope: {attachmentId, K_att, IV, originalFileName, sha256, mimeType}
-    Alice->>Alice: Encrypt metadata envelope inside E2EE message payload
+    Alice->>Alice: Encrypt metadata envelope inside E2EE Double Ratchet message payload
     Alice->>Server: Send E2EE message containing media envelope
     
     Server->>Bob: Deliver E2EE message
     Bob->>Bob: Decrypt E2EE message payload -> Extract {attachmentId, K_att, IV, sha256}
     
-    Bob->>Server: GET /api/v1/attachments/{attachmentId}/download-request
+    Bob->>Server: GET /api/v1/attachments/{attachmentId}/download
     Server->>Server: Verify Bob is authorized conversation participant
-    Server-->>Bob: Returns downloadUrl
+    Server->>Storage: Generate short-lived (300s) private signed download URL
+    Server-->>Bob: Returns downloadUrl & signedUrl
     
-    Bob->>Storage: GET /attachments/{attachmentId} -> Download Ciphertext
+    Bob->>Server: GET /api/v1/attachments/{attachmentId}/file (or signed URL)
+    Server->>Storage: Retrieve ciphertext from private bucket
+    Storage-->>Server: Ciphertext stream
+    Server-->>Bob: Stream Ciphertext
     Bob->>Bob: Verify SHA-256 checksum
     Bob->>Bob: Decrypt Ciphertext with K_att and IV
     Bob->>Bob: Store decrypted file in private app storage & render in UI

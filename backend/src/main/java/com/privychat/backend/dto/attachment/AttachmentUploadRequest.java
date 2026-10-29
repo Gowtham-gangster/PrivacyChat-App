@@ -7,6 +7,7 @@ import java.util.UUID;
 public class AttachmentUploadRequest {
 
     private UUID messageId;
+    private UUID conversationId;
 
     @Min(value = 1, message = "File size must be greater than 0")
     private long fileSizeBytes;
@@ -25,8 +26,19 @@ public class AttachmentUploadRequest {
         this.mimeType = mimeType;
     }
 
+    public AttachmentUploadRequest(UUID messageId, UUID conversationId, long fileSizeBytes, String sha256Checksum, String mimeType) {
+        this.messageId = messageId;
+        this.conversationId = conversationId;
+        this.fileSizeBytes = fileSizeBytes;
+        this.sha256Checksum = sha256Checksum;
+        this.mimeType = mimeType;
+    }
+
     public UUID getMessageId() { return messageId; }
     public void setMessageId(UUID messageId) { this.messageId = messageId; }
+
+    public UUID getConversationId() { return conversationId; }
+    public void setConversationId(UUID conversationId) { this.conversationId = conversationId; }
 
     public long getFileSizeBytes() { return fileSizeBytes; }
     public void setFileSizeBytes(long fileSizeBytes) { this.fileSizeBytes = fileSizeBytes; }
@@ -37,4 +49,3 @@ public class AttachmentUploadRequest {
     public String getMimeType() { return mimeType; }
     public void setMimeType(String mimeType) { this.mimeType = mimeType; }
 }
-
