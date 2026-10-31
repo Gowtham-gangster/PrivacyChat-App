@@ -2,7 +2,7 @@ spring:
   application:
     name: privychat-backend
   profiles:
-    active: dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
     url: ${DATABASE_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/privychat}}
     username: ${DATABASE_USERNAME:${SPRING_DATASOURCE_USERNAME:privychat_user}}

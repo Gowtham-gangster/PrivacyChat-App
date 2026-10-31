@@ -40,7 +40,7 @@ Write-Host "Copied $builtJar -> application.jar ($([math]::Round((Get-Item $appJ
 
 # 4. Write Procfile with strict LF
 $procfilePath = Join-Path $staging "Procfile"
-$procfileContent = "web: java -Dserver.port=`$PORT -Djava.security.egd=file:/dev/./urandom -jar application.jar`n"
+$procfileContent = "web: java -Dserver.port=`${PORT:-5000} -Dspring.profiles.active=`${SPRING_PROFILES_ACTIVE:-prod} -Djava.security.egd=file:/dev/./urandom -jar application.jar`n"
 [System.IO.File]::WriteAllBytes($procfilePath, [System.Text.Encoding]::UTF8.GetBytes($procfileContent))
 Write-Host "Written Procfile with POSIX LF line endings"
 

@@ -3,11 +3,14 @@ spring:
     activate:
       on-profile: dev
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/privychat}
-    username: ${DATABASE_USERNAME:privychat_user}
-    password: ${DATABASE_PASSWORD:privychat_password}
+    url: ${DATABASE_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/privychat}}
+    username: ${DATABASE_USERNAME:${SPRING_DATASOURCE_USERNAME:privychat_user}}
+    password: ${DATABASE_PASSWORD:${SPRING_DATASOURCE_PASSWORD:privychat_password}}
   jpa:
     show-sql: false
   flyway:
     enabled: true
+
+server:
+  port: ${PORT:${SERVER_PORT:8080}}
 
