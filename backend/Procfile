@@ -1,2 +1,1 @@
 web: java -Dserver.port=5000 -Dspring.profiles.active=prod -Djava.security.egd=file:/dev/./urandom -jar application.jar
-

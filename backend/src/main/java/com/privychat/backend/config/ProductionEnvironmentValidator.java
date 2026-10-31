@@ -25,6 +25,15 @@ public class ProductionEnvironmentValidator implements ApplicationContextInitial
     public void initialize(ConfigurableApplicationContext context) {
         ConfigurableEnvironment env = context.getEnvironment();
 
+        boolean isAws = isRunningOnAws();
+        if (isAws) {
+            log.info("AWS Elastic Beanstalk environment detected! Enforcing 'prod' profile and port 5000.");
+            env.setActiveProfiles("prod");
+            if (System.getProperty("server.port") == null && env.getProperty("PORT") == null && env.getProperty("SERVER_PORT") == null) {
+                System.setProperty("server.port", "5000");
+            }
+        }
+
         boolean isProd = false;
         boolean isDevOrTest = false;
 
@@ -158,6 +167,15 @@ public class ProductionEnvironmentValidator implements ApplicationContextInitial
         }
 
         log.info("All required production environment properties are present and valid.");
+    }
+
+    private boolean isRunningOnAws() {
+        return new java.io.File("/opt/elasticbeanstalk").exists()
+                || new java.io.File("/var/app/current").exists()
+                || System.getenv("AWS_EXECUTION_ENV") != null
+                || System.getenv("AWS_REGION") != null
+                || System.getenv("ELASTIC_BEANSTALK_ENVIRONMENT_NAME") != null
+                || System.getenv("EB_ENVIRONMENT_NAME") != null;
     }
 
     private String getProperty(ConfigurableEnvironment env, String... keys) {
