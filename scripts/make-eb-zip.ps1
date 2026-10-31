@@ -40,7 +40,7 @@ Write-Host "Copied $builtJar -> application.jar ($([math]::Round((Get-Item $appJ
 
 # 4. Write Procfile with strict LF
 $procfilePath = Join-Path $staging "Procfile"
-$procfileContent = "web: java -Dserver.port=`${PORT:-5000} -Dspring.profiles.active=`${SPRING_PROFILES_ACTIVE:-prod} -Djava.security.egd=file:/dev/./urandom -jar application.jar`n"
+$procfileContent = "web: java -Dserver.port=5000 -Dspring.profiles.active=prod -Djava.security.egd=file:/dev/./urandom -jar application.jar`n"
 [System.IO.File]::WriteAllBytes($procfilePath, [System.Text.Encoding]::UTF8.GetBytes($procfileContent))
 Write-Host "Written Procfile with POSIX LF line endings"
 
@@ -134,6 +134,16 @@ foreach ($f in $extractedFiles) {
     Write-Host "Extracted: $rel ($($f.Length) bytes)"
 }
 Remove-Item -Recurse -Force $testExtractDir
+
+# 9. Print SHA-256 Hashes
+Write-Host ""
+Write-Host "=========================================================="
+Write-Host "SHA-256 HASH VERIFICATION"
+Write-Host "=========================================================="
+$jarHash = (Get-FileHash -Path $builtJar -Algorithm SHA256).Hash
+$zipHash = (Get-FileHash -Path $TargetZip -Algorithm SHA256).Hash
+Write-Host "Packaged JAR SHA-256 : $jarHash"
+Write-Host "Deployment ZIP SHA-256: $zipHash"
 
 Write-Host ""
 Write-Host "ALL VERIFICATIONS PASSED: Bundle is ready for AWS Elastic Beanstalk (Linux)."

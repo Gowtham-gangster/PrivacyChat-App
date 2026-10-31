@@ -2,11 +2,11 @@ spring:
   application:
     name: privychat-backend
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${SPRING_PROFILES_ACTIVE:prod}
   datasource:
-    url: ${DATABASE_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/privychat}}
-    username: ${DATABASE_USERNAME:${SPRING_DATASOURCE_USERNAME:privychat_user}}
-    password: ${DATABASE_PASSWORD:${SPRING_DATASOURCE_PASSWORD:privychat_password}}
+    url: ${DATABASE_URL:${SPRING_DATASOURCE_URL:}}
+    username: ${DATABASE_USERNAME:${SPRING_DATASOURCE_USERNAME:}}
+    password: ${DATABASE_PASSWORD:${SPRING_DATASOURCE_PASSWORD:}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -43,7 +43,7 @@ spring:
             enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:${SMTP_STARTTLS_ENABLE:true}}
 
 server:
-  port: ${PORT:${SERVER_PORT:${X_ZOHO_CATALYST_LISTEN_PORT:8080}}}
+  port: ${PORT:${SERVER_PORT:5000}}
   address: 0.0.0.0
   shutdown: graceful
   servlet:

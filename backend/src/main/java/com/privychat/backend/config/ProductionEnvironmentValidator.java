@@ -26,16 +26,34 @@ public class ProductionEnvironmentValidator implements ApplicationContextInitial
         ConfigurableEnvironment env = context.getEnvironment();
 
         boolean isProd = false;
+        boolean isDevOrTest = false;
+
         for (String profile : env.getActiveProfiles()) {
             if ("prod".equalsIgnoreCase(profile) || "production".equalsIgnoreCase(profile)) {
                 isProd = true;
-                break;
+            }
+            if ("dev".equalsIgnoreCase(profile) || "test".equalsIgnoreCase(profile) || "local".equalsIgnoreCase(profile)) {
+                isDevOrTest = true;
+            }
+        }
+
+        if (!isProd && !isDevOrTest) {
+            String activeProp = env.getProperty("spring.profiles.active");
+            if (activeProp != null) {
+                if (activeProp.contains("prod") || activeProp.contains("production")) {
+                    isProd = true;
+                } else if (activeProp.contains("dev") || activeProp.contains("test") || activeProp.contains("local")) {
+                    isDevOrTest = true;
+                }
+            } else {
+                // If no profile is explicitly defined, our application defaults to 'prod'
+                isProd = true;
             }
         }
 
         if (!isProd) {
             log.info("Non-production profile active ({}). Skipping production environment validation.",
-                    String.join(", ", env.getActiveProfiles().length > 0 ? env.getActiveProfiles() : new String[]{"default/dev"}));
+                    String.join(", ", env.getActiveProfiles().length > 0 ? env.getActiveProfiles() : new String[]{"dev"}));
             return;
         }
 
@@ -144,9 +162,13 @@ public class ProductionEnvironmentValidator implements ApplicationContextInitial
 
     private String getProperty(ConfigurableEnvironment env, String... keys) {
         for (String key : keys) {
-            String val = env.getProperty(key);
-            if (val != null && !val.isBlank()) {
-                return val.trim();
+            try {
+                String val = env.getProperty(key);
+                if (val != null && !val.isBlank()) {
+                    return val.trim();
+                }
+            } catch (Exception ignored) {
+                // Ignore placeholder resolution errors and treat as missing property
             }
         }
         return null;

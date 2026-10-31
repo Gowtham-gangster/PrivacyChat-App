@@ -89,5 +89,17 @@ public class ProductionEnvironmentValidatorTest {
 
         assertDoesNotThrow(() -> validator.initialize(context));
     }
+
+    @Test
+    @DisplayName("When no profile is specified, default is treated as prod and throws when database properties are missing")
+    void testDefaultNoProfileTreatedAsProdAndThrowsWhenDatabaseUrlMissing() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        StandardEnvironment env = new StandardEnvironment();
+        // Do not set any active profile
+        context.setEnvironment(env);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> validator.initialize(context));
+        assertTrue(ex.getMessage().contains("DATABASE_URL"), "Error message should mention DATABASE_URL");
+    }
 }
 

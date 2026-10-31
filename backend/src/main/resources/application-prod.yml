@@ -3,9 +3,9 @@ spring:
     activate:
       on-profile: prod
   datasource:
-    url: ${DATABASE_URL:${SPRING_DATASOURCE_URL}}
-    username: ${DATABASE_USERNAME:${SPRING_DATASOURCE_USERNAME}}
-    password: ${DATABASE_PASSWORD:${SPRING_DATASOURCE_PASSWORD}}
+    url: ${DATABASE_URL:${SPRING_DATASOURCE_URL:}}
+    username: ${DATABASE_USERNAME:${SPRING_DATASOURCE_USERNAME:}}
+    password: ${DATABASE_PASSWORD:${SPRING_DATASOURCE_PASSWORD:}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
@@ -33,15 +33,14 @@ server:
 
 privychat:
   jwt:
-    secret: ${JWT_SECRET:${SUPABASE_JWT_SECRET}}
+    secret: ${JWT_SECRET:${SUPABASE_JWT_SECRET:}}
   storage:
     type: ${STORAGE_TYPE:supabase}
     supabase:
-      url: ${SUPABASE_URL}
-      service-role-key: ${SUPABASE_SERVICE_ROLE_KEY}
+      url: ${SUPABASE_URL:}
+      service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
       bucket-name: ${SUPABASE_BUCKET_NAME:privychat-attachments}
       signed-url-expiration: ${SUPABASE_SIGNED_URL_EXPIRATION:300}
   mail:
-    from-address: ${PRIVYCHAT_MAIL_FROM:${MAIL_FROM_ADDRESS:${SPRING_MAIL_USERNAME:${SMTP_USERNAME}}}}
+    from-address: ${PRIVYCHAT_MAIL_FROM:${MAIL_FROM_ADDRESS:${SPRING_MAIL_USERNAME:${SMTP_USERNAME:}}}}
     from-name: ${PRIVYCHAT_MAIL_FROM_NAME:${MAIL_FROM_NAME:PrivyChat Security}}
-
