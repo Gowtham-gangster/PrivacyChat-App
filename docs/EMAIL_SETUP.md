@@ -1,51 +1,58 @@
-# PrivyChat Email Delivery & Friend Invitation Guide
+# PrivyChat SMTP-Only Communication & Email Delivery Architecture
 
-## 1. Overview
+## 1. Mandatory SMTP Communication Policy
 
-PrivyChat uses transactional email for two critical security workflows:
-1. **Account Verification**: Dispatching 6-digit OTP verification codes to confirm email ownership during onboarding.
-2. **Contact Invitations**: Sending secure invitation emails to non-registered friends with high-entropy, time-limited verification links.
+PrivyChat enforces a strict **SMTP-Only Communication Policy**. All account authentication, onboarding verification, credential recovery, identifier modifications, and friend invitations are processed exclusively through **the Spring Boot backend using JavaMailSender and your manually configured SMTP server**.
 
----
+### Workflows Handled by SMTP
+1. **Registration Email Verification**: 6-digit cryptographic single-use OTP dispatched during signup to prove ownership of the email account.
+2. **Welcome & Activation Email**: Sent strictly once upon initial successful verification of the account.
+3. **Password-Reset Verification**: Secure single-use expiring token/OTP sent to the registered email address.
+4. **Password-Changed Confirmation**: Immediate security alert notification confirming password modification and invalidation of prior sessions.
+5. **Email Address Changes**: Verification code sent to the requested new email, plus a security notification alert sent to the previous verified address.
+6. **Mobile Number Changes**: **Exclusively verified through the user's registered email address.** An email is dispatched identifying the pending change with a masked phone number (e.g. `+141 *** *** 0299`) and a verification code.
+7. **Mobile Number Updated Notification**: Immediate security notification dispatched to the registered email upon phone number commit.
+8. **Friend Invitations**: Cryptographically signed invitation tokens with deep-links to the application download portal.
 
-## 2. Security Safeguards for Invitations
-
-1. **No Credentials in URLs**: Invitation tokens are opaque, random 256-bit cryptographic hex tokens. They contain no passwords, encryption keys, or prekeys.
-2. **No Direct APK Attachments**: Email providers often quarantine or flag APK file attachments as malware. PrivyChat emails include verified HTTPS download links rather than raw binaries.
-3. **Token Hashing & Expiration**: Only the SHA-256 hash of the invitation token is stored in the PostgreSQL database. Tokens expire after 7 days.
-4. **Rate Limiting**: Users are strictly limited to sending at most 10 invitations per hour to prevent spam abuse.
-5. **Anti-Enumeration**: Public invite endpoints return uniform responses regardless of whether the target email is already registered.
-
----
-
-## 3. Responsive HTML Email Template
-
-Invitations are delivered with responsive HTML and plain-text fallback:
-- **Header**: PrivyChat Brand Logo & Privacy Shield badge.
-- **Body**: Personalized message: `"[Inviter Display Name] invited you to connect privately on PrivyChat."`
-- **Call-to-Action**: Prominent button linking to the HTTPS APK download page with the embedded invite token (`https://privychat.example.com/invite?token=...`).
-- **Footer**: Explanation that PrivyChat is an end-to-end encrypted private messenger, along with an opt-out mechanism.
+> [!IMPORTANT]
+> **No SMS Services or Supabase Auth Emails**:
+> - All SMS providers (Twilio, AWS SNS) have been completely removed.
+> - Supabase Auth email services, Supabase invitation emails, and Supabase password-reset hooks are strictly forbidden. Supabase is utilized exclusively for PostgreSQL database persistence and private object storage.
 
 ---
 
-## 4. SMTP Provider Configuration
+## 2. SMTP Provider Configuration
 
-Configure environment variables in `.env` or the platform environment:
+PrivyChat supports standard Spring Boot mail properties and common environment aliases:
 
-```env
-# Mailtrap (for local development/testing)
-SMTP_HOST=smtp.mailtrap.io
+```properties
+# Standard Spring Boot Mail Variables
+SPRING_MAIL_HOST=smtp.gmail.com
+SPRING_MAIL_PORT=587
+SPRING_MAIL_USERNAME=your_email@gmail.com
+SPRING_MAIL_PASSWORD=your_app_specific_password
+SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=true
+SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=true
+PRIVYCHAT_MAIL_FROM=your_email@gmail.com
+PRIVYCHAT_MAIL_FROM_NAME=PrivyChat Security
+
+# Backward-Compatible Aliases
+SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USERNAME=your_mailtrap_user
-SMTP_PASSWORD=your_mailtrap_pass
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_specific_password
+SMTP_AUTH=true
 SMTP_STARTTLS_ENABLE=true
-MAIL_FROM_ADDRESS=noreply@privychat.example.com
+MAIL_FROM_ADDRESS=your_email@gmail.com
 MAIL_FROM_NAME=PrivyChat Security
-
-# AWS SES / SendGrid / Postmark (for production)
-# SMTP_HOST=email-smtp.us-east-1.amazonaws.com
-# SMTP_PORT=587
-# SMTP_USERNAME=AKIA...
-# SMTP_PASSWORD=B...
 ```
 
+---
+
+## 3. Security Safeguards
+
+1. **Anti-Enumeration Protection**: The `POST /api/v1/auth/forgot-password` endpoint returns an identical generic response regardless of whether the requested email address exists in the database.
+2. **Single-Use Expiring Tokens**: All verification codes and password reset tokens expire after 10 minutes, are hashed with BCrypt prior to storage, and are permanently erased after first use.
+3. **Attempt Limiting & Cooldowns**: A maximum of 5 attempts are allowed per code before automatic invalidation.
+4. **No Plaintext Credential Logging**: Verification codes, reset tokens, and SMTP credentials are strictly excluded from all application logs and telemetry.
+5. **Strict Failure Preservation**: If the SMTP server is unreachable or rejects authentication, the backend throws an actionable `BadRequestException` and preserves the pending change, preventing unverified state transitions.

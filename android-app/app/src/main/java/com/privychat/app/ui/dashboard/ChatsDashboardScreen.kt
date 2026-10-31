@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddComment
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,6 +34,7 @@ fun ChatsDashboardScreen(
     viewModel: ChatsDashboardViewModel,
     onNavigateToConversation: (convId: UUID, name: String, userId: UUID) -> Unit,
     onNavigateToContacts: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
     val conversations by viewModel.conversations.collectAsState()
@@ -63,6 +65,24 @@ fun ChatsDashboardScreen(
                                 .clip(CircleShape)
                                 .background(statusColor)
                         )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToProfile) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Profile",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

@@ -14,18 +14,29 @@ Tokens are valid for 15 minutes. Clients obtain fresh access tokens using the `P
 
 ## 2. REST Endpoints Specification
 
-### A. Authentication & Onboarding
+### A. Authentication & Onboarding (SMTP-Only Communication)
 - **`POST /api/v1/auth/register`**
   - **Body**: `{ "displayName": "Alice", "email": "alice@example.com", "phoneNumber": "+12025550143", "password": "SecurePassword123!", "termsAccepted": true }`
-  - **Response (201)**: `{ "userId": "...", "emailVerified": false, "phoneVerified": false }`
+  - **Response (201)**: `{ "id": "...", "displayName": "Alice", "email": "alice@example.com", "phoneNumber": "+12025550143", "emailVerified": false, "phoneVerified": false }`
+  - *Dispatches 6-digit registration verification OTP to `email` via SMTP.*
 - **`POST /api/v1/auth/verify-email-otp`**
-  - **Body**: `{ "email": "alice@example.com", "otpCode": "123456" }`
+  - **Body**: `{ "identifier": "alice@example.com", "otpCode": "123456" }`
   - **Response (200)**: `{ "verified": true }`
-- **`POST /api/v1/auth/verify-phone-otp`**
-  - **Body**: `{ "phoneNumber": "+12025550143", "otpCode": "654321" }`
-  - **Response (200)**: `{ "verified": true }`
+  - *Validates single-use OTP, activates account, and dispatches a Welcome Email via SMTP.*
+- **`POST /api/v1/auth/resend-verification`**
+  - **Body**: `{ "email": "alice@example.com" }`
+  - **Response (200)**: `{ "message": "If an account exists, a new verification code has been dispatched." }`
+  - *Generates a fresh OTP and resends verification email via SMTP.*
+- **`POST /api/v1/auth/forgot-password`**
+  - **Body**: `{ "email": "alice@example.com" }`
+  - **Response (200)**: `{ "message": "If an account exists for this email address, a password reset code has been sent." }`
+  - *Anti-enumeration protected. Generates single-use reset code and dispatches via SMTP.*
+- **`POST /api/v1/auth/reset-password`**
+  - **Body**: `{ "email": "alice@example.com", "token": "654321", "newPassword": "NewSecurePassword123!" }`
+  - **Response (200)**: `{ "message": "Password successfully reset. You can now log in with your new password." }`
+  - *Validates code, updates password hash, revokes existing sessions, and dispatches confirmation alert via SMTP.*
 - **`POST /api/v1/auth/login`**
-  - **Body**: `{ "identifier": "+12025550143", "password": "SecurePassword123!", "deviceLabel": "Pixel 8 Pro" }`
+  - **Body**: `{ "identifier": "alice@example.com", "password": "SecurePassword123!", "deviceLabel": "Pixel 8 Pro" }`
   - **Response (200)**: `{ "accessToken": "...", "refreshToken": "...", "user": { ... }, "deviceId": "..." }`
 - **`POST /api/v1/auth/refresh`**
   - **Body**: `{ "refreshToken": "..." }`
@@ -56,7 +67,43 @@ Tokens are valid for 15 minutes. Clients obtain fresh access tokens using the `P
   - Retrieves recipient prekey bundle for X3DH initialization.
   - Automatically consumes one $OPK$.
 
-### C. Contacts & Invitations
+### C. Profile, Avatar & Identity Verification
+- **`GET /api/v1/profile`**
+  - Retrieves current authenticated user's profile with verified and pending channels.
+  - **Response (200)**: `{ "id": "...", "displayName": "Alice", "email": "alice@example.com", "phoneNumber": "+12025550143", "avatarUrl": "/api/v1/profile/avatar/...", "emailVerified": true, "phoneVerified": true, "pendingEmail": null, "pendingPhoneNumber": null, "createdAt": "..." }`
+- **`PATCH /api/v1/profile`**
+  - Updates mutable profile metadata (display name).
+  - **Body**: `{ "displayName": "Alice Updated" }`
+  - **Response (200)**: `{ ... updated profile ... }`
+- **`POST /api/v1/profile/email-change`**
+  - Validates uniqueness and dispatches single-use verification code to new email.
+  - **Body**: `{ "newEmail": "alice.new@example.com" }`
+  - **Response (200)**: `{ "message": "Verification code dispatched to alice.new@example.com" }`
+- **`POST /api/v1/profile/email-change/verify`**
+  - Validates token, commits email change, and notifies previous address.
+  - **Body**: `{ "token": "654321" }`
+  - **Response (200)**: `{ ... updated profile with verified email ... }`
+- **`POST /api/v1/profile/phone-change`**
+  - Validates E.164 format, enforces rate limits, and sends OTP.
+  - **Body**: `{ "newPhoneNumber": "+14155550299" }`
+  - **Response (200)**: `{ "message": "Verification OTP dispatched to +14155550299" }`
+- **`POST /api/v1/profile/phone-change/verify`**
+  - Validates 6-digit OTP and commits phone number change.
+  - **Body**: `{ "code": "112233" }`
+  - **Response (200)**: `{ ... updated profile with verified phone ... }`
+- **`POST /api/v1/profile/avatar`**
+  - Uploads sanitized profile image (PNG/JPEG/WEBP <= 5MB) to Supabase Storage.
+  - **Multipart Body**: `file: [binary image]`
+  - **Response (200)**: `{ ... updated profile ... }`
+- **`DELETE /api/v1/profile/avatar`**
+  - Removes avatar from Supabase Storage and restores default avatar.
+  - **Response (200)**: `{ ... updated profile ... }`
+- **`GET /api/v1/profile/avatar/{userId}`**
+  - Streams avatar image bytes with privacy checks (`EVERYONE`, `CONTACTS`, `NOBODY`).
+  - Supports Bearer token header or `?token=<jwt>` parameter.
+  - **Response (200)**: `image/png` bytes with HTTP caching headers.
+
+### D. Contacts & Invitations
 - **`POST /api/v1/contacts/discover`**
   - Matches hashed or normalized phone numbers.
   - **Body**: `{ "phoneNumbers": ["+12025550143", "+12025550199"] }`

@@ -1,8 +1,10 @@
 package com.privychat.backend.service;
 
 import com.privychat.backend.dto.auth.AuthResponse;
+import com.privychat.backend.dto.auth.ForgotPasswordRequest;
 import com.privychat.backend.dto.auth.LoginRequest;
 import com.privychat.backend.dto.auth.RegisterRequest;
+import com.privychat.backend.dto.auth.ResetPasswordRequest;
 import com.privychat.backend.dto.user.UserProfileResponse;
 import com.privychat.backend.entity.User;
 import com.privychat.backend.entity.UserDevice;
@@ -12,6 +14,8 @@ import com.privychat.backend.exception.UnauthorizedException;
 import com.privychat.backend.repository.UserDeviceRepository;
 import com.privychat.backend.repository.UserPrivacySettingRepository;
 import com.privychat.backend.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +28,8 @@ import java.util.UUID;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final UserDeviceRepository userDeviceRepository;
@@ -52,49 +58,118 @@ public class AuthService {
 
     @Transactional
     public UserProfileResponse register(RegisterRequest req) {
-        if (userRepository.existsByEmailIgnoreCase(req.getEmail())) {
+        String normalizedEmail = req.getEmail().toLowerCase().trim();
+        String normalizedPhone = req.getPhoneNumber().trim();
+
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new BadRequestException("An account with this email address already exists");
         }
-        if (userRepository.existsByPhoneNumber(req.getPhoneNumber())) {
+        if (userRepository.existsByPhoneNumber(normalizedPhone)) {
             throw new BadRequestException("An account with this phone number already exists");
         }
 
         String passwordHash = passwordEncoder.encode(req.getPassword());
-        User user = new User(req.getDisplayName(), req.getEmail().toLowerCase().trim(), req.getPhoneNumber().trim(), passwordHash);
+        User user = new User(req.getDisplayName(), normalizedEmail, normalizedPhone, passwordHash);
+        user.setEmailVerified(false);
+        user.setPhoneVerified(false);
         user = userRepository.save(user);
 
         UserPrivacySetting privacySetting = new UserPrivacySetting(user);
         privacySettingRepository.save(privacySetting);
 
-        // Generate and dispatch verification OTPs
+        // Generate registration OTP and dispatch via SMTP only
         String emailOtp = otpService.generateAndSaveOtp(user.getEmail(), "EMAIL_VERIFICATION");
-        emailService.sendVerificationOtpEmail(user.getEmail(), emailOtp);
-
-        String phoneOtp = otpService.generateAndSaveOtp(user.getPhoneNumber(), "PHONE_VERIFICATION");
-        // In local/dev environments or SMS gateways, the OTP is generated and logged/dispatched
-        org.slf4j.LoggerFactory.getLogger(AuthService.class).info("Verification OTP for phone {}: {}", user.getPhoneNumber(), phoneOtp);
+        emailService.sendRegistrationOtpEmail(user.getEmail(), user.getDisplayName(), emailOtp);
+        log.info("Registration verification email dispatched via SMTP for user {}", user.getId());
 
         return mapToProfile(user);
     }
 
     @Transactional
+    public void resendRegistrationOtp(String email) {
+        String normalizedEmail = email.toLowerCase().trim();
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(normalizedEmail);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (user.isEmailVerified()) {
+                throw new BadRequestException("Email is already verified. You can log in.");
+            }
+            String emailOtp = otpService.generateAndSaveOtp(user.getEmail(), "EMAIL_VERIFICATION");
+            emailService.sendRegistrationOtpEmail(user.getEmail(), user.getDisplayName(), emailOtp);
+            log.info("Registration OTP resent via SMTP to: {}", normalizedEmail);
+        }
+    }
+
+    @Transactional
     public boolean verifyEmailOtp(String email, String otpCode) {
-        otpService.verifyOtp(email.toLowerCase().trim(), otpCode, "EMAIL_VERIFICATION");
-        User user = userRepository.findByEmailIgnoreCase(email)
+        String normalizedEmail = email.toLowerCase().trim();
+        otpService.verifyOtp(normalizedEmail, otpCode.trim(), "EMAIL_VERIFICATION");
+
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
                 .orElseThrow(() -> new BadRequestException("User not found"));
+
+        boolean wasAlreadyVerified = user.isEmailVerified();
         user.setEmailVerified(true);
+        user.setPhoneVerified(true);
         userRepository.save(user);
+
+        // Dispatch Welcome Email via SMTP strictly once upon initial verification
+        if (!wasAlreadyVerified) {
+            try {
+                emailService.sendWelcomeEmail(user.getEmail(), user.getDisplayName());
+            } catch (Exception e) {
+                log.warn("Welcome email dispatch failed: {}", e.getMessage());
+            }
+        }
+
+        log.info("Email verification confirmed via SMTP for user {}", user.getId());
         return true;
     }
 
     @Transactional
-    public boolean verifyPhoneOtp(String phoneNumber, String otpCode) {
-        otpService.verifyOtp(phoneNumber.trim(), otpCode, "PHONE_VERIFICATION");
-        User user = userRepository.findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new BadRequestException("User not found"));
-        user.setPhoneVerified(true);
+    public String forgotPassword(ForgotPasswordRequest req) {
+        String normalizedEmail = req.getEmail().toLowerCase().trim();
+        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(normalizedEmail);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            String resetToken = otpService.generateAndSaveOtp(user.getEmail(), "PASSWORD_RESET");
+            emailService.sendPasswordResetEmail(user.getEmail(), user.getDisplayName(), resetToken);
+            log.info("Password reset code dispatched via SMTP to user {}", user.getId());
+        }
+
+        // Generic response prevents account enumeration
+        return "If an account exists for this email address, a password reset code has been sent.";
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest req) {
+        String normalizedEmail = req.getEmail().toLowerCase().trim();
+        otpService.verifyOtp(normalizedEmail, req.getToken().trim(), "PASSWORD_RESET");
+
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail)
+                .orElseThrow(() -> new BadRequestException("Account not found"));
+
+        user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         userRepository.save(user);
-        return true;
+
+        // Revoke all active sessions on password change
+        revokeAllSessions(user.getId());
+
+        // Dispatch confirmation email via SMTP
+        try {
+            emailService.sendPasswordChangedNotification(user.getEmail(), user.getDisplayName());
+        } catch (Exception e) {
+            log.warn("Password change confirmation email failed: {}", e.getMessage());
+        }
+
+        log.info("Password reset successfully completed for user {}", user.getId());
+    }
+
+    @Transactional
+    public boolean verifyPhoneOtp(String phoneNumber, String otpCode) {
+        // SMS verification is discontinued per SMTP-only policy.
+        throw new BadRequestException("SMS verification is discontinued. Phone numbers are verified via your registered email address.");
     }
 
     @Transactional
@@ -182,15 +257,18 @@ public class AuthService {
     }
 
     private UserProfileResponse mapToProfile(User user) {
+        String avatarEndpoint = user.getAvatarUrl() != null ? "/api/v1/profile/avatar/" + user.getId() : null;
         return new UserProfileResponse(
                 user.getId(),
                 user.getDisplayName(),
                 user.getEmail(),
                 user.getPhoneNumber(),
-                user.getAvatarUrl(),
+                avatarEndpoint,
                 user.isEmailVerified(),
-                user.isPhoneVerified()
+                user.isPhoneVerified(),
+                user.getPendingEmail(),
+                user.getPendingPhone(),
+                user.getCreatedAt()
         );
     }
 }
-

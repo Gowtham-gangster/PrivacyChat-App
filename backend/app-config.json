@@ -1,0 +1,26 @@
+{
+  "command": "java -Djava.security.egd=file:/dev/./urandom -jar privychat-backend-1.0.0.jar",
+  "build_path": "./target",
+  "stack": "java21",
+  "platform": "javase",
+  "memory": 512,
+  "catalyst_auth": false,
+  "env_variables": {
+    "SPRING_PROFILES_ACTIVE": "prod",
+    "DATABASE_URL": "jdbc:postgresql://aws-0-eu-west-2.pooler.supabase.com:5432/postgres?sslmode=require",
+    "DATABASE_USERNAME": "postgres.tpdzjxreekijfdpnptns",
+    "DATABASE_PASSWORD": "Gowtham@1234",
+    "JWT_SECRET": "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970",
+    "STORAGE_TYPE": "supabase",
+    "SUPABASE_URL": "https://tpdzjxreekijfdpnptns.supabase.co",
+    "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwZHpqeHJlZWtpamZkcG5wdG5zIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MzI3MTgwMywiZXhwIjoyMTA4ODQ3ODAzfQ.bPZbcosWymVi8lAnn5cYo_-coIlZj19GHzlEcB8Q_zE",
+    "SUPABASE_BUCKET_NAME": "privychat-attachments",
+    "SUPABASE_SIGNED_URL_EXPIRATION": "300",
+    "SMTP_HOST": "smtp.gmail.com",
+    "SMTP_PORT": "587",
+    "SMTP_USERNAME": "pusuloorigowtham@gmail.com",
+    "SMTP_PASSWORD": "rvqrkbhyfkwpcnyk",
+    "STUN_SERVER_URL": "stun:stun.l.google.com:19302",
+    "COTURN_ENABLED": "false"
+  }
+}

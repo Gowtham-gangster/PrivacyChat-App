@@ -1,0 +1,13 @@
+# Elastic Beanstalk Ignore File
+src/
+target/classes/
+target/generated-sources/
+target/maven-archiver/
+target/maven-status/
+target/test-classes/
+target/surefire-reports/
+*.iml
+.idea/
+.git/
+.gitignore
+

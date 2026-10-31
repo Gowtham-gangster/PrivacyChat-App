@@ -4,9 +4,9 @@ spring:
   profiles:
     active: dev
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/privychat}
-    username: ${DATABASE_USERNAME:privychat_user}
-    password: ${DATABASE_PASSWORD:privychat_password}
+    url: ${DATABASE_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/privychat}}
+    username: ${DATABASE_USERNAME:${SPRING_DATASOURCE_USERNAME:privychat_user}}
+    password: ${DATABASE_PASSWORD:${SPRING_DATASOURCE_PASSWORD:privychat_password}}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -27,28 +27,35 @@ spring:
     baseline-on-migrate: true
     locations: classpath:db/migration
 
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
   mail:
-    host: ${SMTP_HOST:smtp.mailtrap.io}
-    port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME:user}
-    password: ${SMTP_PASSWORD:pass}
+    host: ${SPRING_MAIL_HOST:${SMTP_HOST:smtp.mailtrap.io}}
+    port: ${SPRING_MAIL_PORT:${SMTP_PORT:587}}
+    username: ${SPRING_MAIL_USERNAME:${SMTP_USERNAME:user}}
+    password: ${SPRING_MAIL_PASSWORD:${SMTP_PASSWORD:pass}}
     properties:
       mail:
         smtp:
-          auth: ${SMTP_AUTH:true}
+          auth: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH:${SMTP_AUTH:true}}
           starttls:
-            enable: ${SMTP_STARTTLS_ENABLE:true}
+            enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:${SMTP_STARTTLS_ENABLE:true}}
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${PORT:${SERVER_PORT:${X_ZOHO_CATALYST_LISTEN_PORT:8080}}}
+  address: 0.0.0.0
+  shutdown: graceful
   servlet:
     context-path: /
 
 privychat:
   app-base-url: ${APP_BASE_URL:http://localhost:8080}
   apk-download-url: ${APK_DOWNLOAD_URL:https://privychat.example.com/download/privychat-release.apk}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
   jwt:
-    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    secret: ${JWT_SECRET:${SUPABASE_JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}}
     access-expiration-minutes: 15
     refresh-expiration-days: 30
     issuer: ${AUTH_ISSUER:https://privychat.example.com}
@@ -61,17 +68,25 @@ privychat:
       bucket-name: ${SUPABASE_BUCKET_NAME:privychat-attachments}
       signed-url-expiration: ${SUPABASE_SIGNED_URL_EXPIRATION:300}
   mail:
-    from-address: ${MAIL_FROM_ADDRESS:noreply@privychat.example.com}
-    from-name: ${MAIL_FROM_NAME:PrivyChat Security}
+    from-address: ${PRIVYCHAT_MAIL_FROM:${MAIL_FROM_ADDRESS:${SPRING_MAIL_USERNAME:${SMTP_USERNAME:noreply@privychat.example.com}}}}
+    from-name: ${PRIVYCHAT_MAIL_FROM_NAME:${MAIL_FROM_NAME:PrivyChat Security}}
   fcm:
     enabled: ${FCM_ENABLED:false}
     project-id: ${FCM_PROJECT_ID:privychat}
     credentials-path: ${FCM_CREDENTIALS_PATH:/etc/privychat/firebase.json}
   webrtc:
-    stun-server: ${STUN_SERVER_URL:stun:stun.l.google.com:19302}
-    turn-server: ${TURN_SERVER_URL:turn:turn.privychat.example.com:3478}
-    turn-username: ${TURN_SERVER_USERNAME:privychat_turn_user}
-    turn-secret: ${TURN_SERVER_CREDENTIAL:turn_secret}
+    stun-server: ${STUN_SERVER_URL:${STUN_SERVER:stun:stun.l.google.com:19302}}
+    coturn:
+      enabled: ${COTURN_ENABLED:false}
+      host: ${COTURN_HOST:}
+      port: ${COTURN_PORT:3478}
+      tls-port: ${COTURN_TLS_PORT:5349}
+      static-secret: ${COTURN_STATIC_SECRET:}
+      realm: ${COTURN_REALM:privychat.app}
+      ttl-seconds: ${COTURN_TTL_SECONDS:86400}
+    turn-server: ${TURN_SERVER_URL:${TURN_SERVER:}}
+    turn-username: ${TURN_SERVER_USERNAME:${TURN_USERNAME:}}
+    turn-secret: ${TURN_SERVER_CREDENTIAL:${TURN_PASSWORD:}}
 
 management:
   endpoints:

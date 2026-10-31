@@ -27,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
+    onNavigateToProfile: () -> Unit = {},
     onLoggedOut: () -> Unit
 ) {
     val displayName by viewModel.displayName.collectAsState()
@@ -61,11 +62,12 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Profile Card Header
+            // Profile Card Header (Clickable to open full Profile page)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .clickable { onNavigateToProfile() },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {

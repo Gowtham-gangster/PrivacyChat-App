@@ -2,10 +2,12 @@ package com.privychat.backend.controller;
 
 import com.privychat.backend.dto.call.CallSessionResponse;
 import com.privychat.backend.dto.call.CallSignalMessage;
+import com.privychat.backend.dto.call.IceConfigResponse;
 import com.privychat.backend.dto.chat.MessageReceiptDto;
 import com.privychat.backend.dto.chat.SendMessageRequest;
 import com.privychat.backend.service.CallSignalingService;
 import com.privychat.backend.service.MessageService;
+import com.privychat.backend.service.TurnCredentialService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -25,15 +27,26 @@ public class CallSignalingController {
 
     private final CallSignalingService callSignalingService;
     private final MessageService messageService;
+    private final TurnCredentialService turnCredentialService;
 
-    public CallSignalingController(CallSignalingService callSignalingService, MessageService messageService) {
+    public CallSignalingController(CallSignalingService callSignalingService,
+                                   MessageService messageService,
+                                   TurnCredentialService turnCredentialService) {
         this.callSignalingService = callSignalingService;
         this.messageService = messageService;
+        this.turnCredentialService = turnCredentialService;
     }
 
     // =========================================================================
     // REST Endpoints
     // =========================================================================
+
+    @GetMapping("/api/v1/calls/ice-servers")
+    @ResponseBody
+    @Operation(summary = "Get WebRTC ICE server configurations with ephemeral TURN credentials")
+    public ResponseEntity<IceConfigResponse> getIceServers(@AuthenticationPrincipal UUID userId) {
+        return ResponseEntity.ok(turnCredentialService.getIceServers(userId));
+    }
 
     @PostMapping("/api/v1/calls/signal")
     @ResponseBody

@@ -1,5 +1,6 @@
 package com.privychat.backend.dto.user;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public class UserProfileResponse {
@@ -11,10 +12,14 @@ public class UserProfileResponse {
     private String avatarUrl;
     private boolean emailVerified;
     private boolean phoneVerified;
+    private String pendingEmail;
+    private String pendingPhoneNumber;
+    private Instant createdAt;
 
     public UserProfileResponse() {}
 
-    public UserProfileResponse(UUID id, String displayName, String email, String phoneNumber, String avatarUrl, boolean emailVerified, boolean phoneVerified) {
+    public UserProfileResponse(UUID id, String displayName, String email, String phoneNumber, String avatarUrl,
+                               boolean emailVerified, boolean phoneVerified) {
         this.id = id;
         this.displayName = displayName;
         this.email = email;
@@ -22,6 +27,21 @@ public class UserProfileResponse {
         this.avatarUrl = avatarUrl;
         this.emailVerified = emailVerified;
         this.phoneVerified = phoneVerified;
+    }
+
+    public UserProfileResponse(UUID id, String displayName, String email, String phoneNumber, String avatarUrl,
+                               boolean emailVerified, boolean phoneVerified,
+                               String pendingEmail, String pendingPhoneNumber, Instant createdAt) {
+        this.id = id;
+        this.displayName = displayName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.avatarUrl = avatarUrl;
+        this.emailVerified = emailVerified;
+        this.phoneVerified = phoneVerified;
+        this.pendingEmail = pendingEmail;
+        this.pendingPhoneNumber = pendingPhoneNumber;
+        this.createdAt = createdAt;
     }
 
     public UUID getId() { return id; }
@@ -44,5 +64,13 @@ public class UserProfileResponse {
 
     public boolean isPhoneVerified() { return phoneVerified; }
     public void setPhoneVerified(boolean phoneVerified) { this.phoneVerified = phoneVerified; }
-}
 
+    public String getPendingEmail() { return pendingEmail; }
+    public void setPendingEmail(String pendingEmail) { this.pendingEmail = pendingEmail; }
+
+    public String getPendingPhoneNumber() { return pendingPhoneNumber; }
+    public void setPendingPhoneNumber(String pendingPhoneNumber) { this.pendingPhoneNumber = pendingPhoneNumber; }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+}

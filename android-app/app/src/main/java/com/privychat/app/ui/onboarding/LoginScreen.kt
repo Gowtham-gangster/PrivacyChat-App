@@ -2,8 +2,10 @@ package com.privychat.app.ui.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,12 +25,32 @@ fun LoginScreen(
     var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    var showForgotDialog by remember { mutableStateOf(false) }
+    var forgotEmail by remember { mutableStateOf("") }
+    var resetToken by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var isResetStep by remember { mutableStateOf(false) }
+    var forgotSuccessMsg by remember { mutableStateOf<String?>(null) }
+
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
-        if (authState is AuthViewModel.AuthState.LoginSuccess) {
-            viewModel.resetState()
-            onLoginSuccess()
+        when (authState) {
+            is AuthViewModel.AuthState.LoginSuccess -> {
+                viewModel.resetState()
+                onLoginSuccess()
+            }
+            is AuthViewModel.AuthState.PasswordResetRequested -> {
+                isResetStep = true
+                forgotSuccessMsg = (authState as AuthViewModel.AuthState.PasswordResetRequested).message
+            }
+            is AuthViewModel.AuthState.PasswordResetSuccess -> {
+                showForgotDialog = false
+                isResetStep = false
+                forgotSuccessMsg = null
+                viewModel.resetState()
+            }
+            else -> {}
         }
     }
 
@@ -39,7 +61,9 @@ fun LoginScreen(
             .padding(24.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -61,7 +85,7 @@ fun LoginScreen(
             if (authState is AuthViewModel.AuthState.Error) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                 ) {
                     Text(
                         text = (authState as AuthViewModel.AuthState.Error).message,
@@ -70,7 +94,6 @@ fun LoginScreen(
                         fontSize = 13.sp
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
             }
 
             OutlinedTextField(
@@ -95,7 +118,23 @@ fun LoginScreen(
                 shape = RoundedCornerShape(10.dp)
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = {
+                    forgotEmail = if (identifier.contains("@")) identifier else ""
+                    resetToken = ""
+                    newPassword = ""
+                    isResetStep = false
+                    forgotSuccessMsg = null
+                    showForgotDialog = true
+                }) {
+                    Text("Forgot Password?", fontSize = 13.sp)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = { viewModel.login(identifier, password) },
@@ -119,5 +158,77 @@ fun LoginScreen(
             }
         }
     }
-}
 
+    if (showForgotDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showForgotDialog = false
+                viewModel.resetState()
+            },
+            title = { Text(if (!isResetStep) "Reset Password" else "Enter New Password") },
+            text = {
+                Column {
+                    if (!isResetStep) {
+                        Text(
+                            "Enter your registered email address. A password reset code will be sent to your inbox via SMTP.",
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = forgotEmail,
+                            onValueChange = { forgotEmail = it },
+                            label = { Text("Registered Email") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        if (forgotSuccessMsg != null) {
+                            Text(forgotSuccessMsg!!, fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        Text("Enter the 6-digit code received via email and your new password:", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = resetToken,
+                            onValueChange = { resetToken = it },
+                            label = { Text("6-Digit Code") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedTextField(
+                            value = newPassword,
+                            onValueChange = { newPassword = it },
+                            label = { Text("New Password (min 8 chars)") },
+                            visualTransformation = PasswordVisualTransformation(),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (!isResetStep) {
+                            viewModel.forgotPassword(forgotEmail)
+                        } else {
+                            viewModel.resetPassword(forgotEmail, resetToken, newPassword)
+                        }
+                    },
+                    enabled = authState !is AuthViewModel.AuthState.Loading
+                ) {
+                    Text(if (!isResetStep) "Send Code" else "Update Password")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showForgotDialog = false
+                    viewModel.resetState()
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}

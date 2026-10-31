@@ -33,6 +33,12 @@ public class User {
     @Column(name = "phone_verified", nullable = false)
     private boolean phoneVerified = false;
 
+    @Column(name = "pending_email", length = 255)
+    private String pendingEmail;
+
+    @Column(name = "pending_phone", length = 32)
+    private String pendingPhone;
+
     @Column(name = "status", nullable = false, length = 32)
     private String status = "ACTIVE"; // ACTIVE, SUSPENDED, DELETED
 
@@ -81,6 +87,12 @@ public class User {
 
     public boolean isPhoneVerified() { return phoneVerified; }
     public void setPhoneVerified(boolean phoneVerified) { this.phoneVerified = phoneVerified; }
+
+    public String getPendingEmail() { return pendingEmail; }
+    public void setPendingEmail(String pendingEmail) { this.pendingEmail = pendingEmail; }
+
+    public String getPendingPhone() { return pendingPhone; }
+    public void setPendingPhone(String pendingPhone) { this.pendingPhone = pendingPhone; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

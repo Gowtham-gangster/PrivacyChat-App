@@ -1,0 +1,9 @@
+{
+  "appsail": [
+    {
+      "name": "privychat-backend",
+      "source": "backend"
+    }
+  ]
+}
+

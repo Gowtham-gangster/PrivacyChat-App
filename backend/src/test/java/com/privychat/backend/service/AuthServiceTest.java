@@ -1,8 +1,6 @@
 package com.privychat.backend.service;
 
-import com.privychat.backend.dto.auth.AuthResponse;
-import com.privychat.backend.dto.auth.LoginRequest;
-import com.privychat.backend.dto.auth.RegisterRequest;
+import com.privychat.backend.dto.auth.*;
 import com.privychat.backend.dto.user.UserProfileResponse;
 import com.privychat.backend.entity.User;
 import com.privychat.backend.entity.UserDevice;
@@ -18,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -75,14 +74,14 @@ public class AuthServiceTest {
         User savedUser = new User("Alice", "alice@example.com", "+12025550143", "hashed_pass");
         savedUser.setId(UUID.randomUUID());
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(otpService.generateAndSaveOtp(anyString(), anyString())).thenReturn("123456");
+        when(otpService.generateAndSaveOtp(eq("alice@example.com"), eq("EMAIL_VERIFICATION"))).thenReturn("123456");
 
         UserProfileResponse response = authService.register(req);
 
         assertNotNull(response);
         assertEquals("Alice", response.getDisplayName());
         assertEquals("alice@example.com", response.getEmail());
-        verify(emailService).sendVerificationOtpEmail(eq("alice@example.com"), eq("123456"));
+        verify(emailService).sendRegistrationOtpEmail(eq("alice@example.com"), eq("Alice"), eq("123456"));
     }
 
     @Test
@@ -92,11 +91,13 @@ public class AuthServiceTest {
 
         assertThrows(BadRequestException.class, () -> authService.register(req));
         verify(userRepository, never()).save(any());
+        verifyNoInteractions(emailService);
     }
 
     @Test
-    void testVerifyEmailOtpSuccess() {
+    void testVerifyEmailOtpSuccess_dispatchesWelcomeEmailOnce() {
         User user = new User("Alice", "alice@example.com", "+12025550143", "hashed_pass");
+        user.setEmailVerified(false);
         when(otpService.verifyOtp("alice@example.com", "123456", "EMAIL_VERIFICATION")).thenReturn(true);
         when(userRepository.findByEmailIgnoreCase("alice@example.com")).thenReturn(Optional.of(user));
 
@@ -104,7 +105,78 @@ public class AuthServiceTest {
 
         assertTrue(result);
         assertTrue(user.isEmailVerified());
+        assertTrue(user.isPhoneVerified());
         verify(userRepository).save(user);
+        verify(emailService).sendWelcomeEmail("alice@example.com", "Alice");
+    }
+
+    @Test
+    void testVerifyEmailOtpRetry_doesNotSendDuplicateWelcomeEmail() {
+        User user = new User("Alice", "alice@example.com", "+12025550143", "hashed_pass");
+        user.setEmailVerified(true); // already verified previously
+        when(otpService.verifyOtp("alice@example.com", "123456", "EMAIL_VERIFICATION")).thenReturn(true);
+        when(userRepository.findByEmailIgnoreCase("alice@example.com")).thenReturn(Optional.of(user));
+
+        boolean result = authService.verifyEmailOtp("alice@example.com", "123456");
+
+        assertTrue(result);
+        verify(userRepository).save(user);
+        verify(emailService, never()).sendWelcomeEmail(anyString(), anyString());
+    }
+
+    @Test
+    void testResendRegistrationOtp() {
+        User user = new User("Alice", "alice@example.com", "+12025550143", "hashed_pass");
+        user.setEmailVerified(false);
+        when(userRepository.findByEmailIgnoreCase("alice@example.com")).thenReturn(Optional.of(user));
+        when(otpService.generateAndSaveOtp("alice@example.com", "EMAIL_VERIFICATION")).thenReturn("654321");
+
+        authService.resendRegistrationOtp("alice@example.com");
+
+        verify(emailService).sendRegistrationOtpEmail("alice@example.com", "Alice", "654321");
+    }
+
+    @Test
+    void testForgotPassword_accountExists_dispatchesResetEmail() {
+        User user = new User("Alice", "alice@example.com", "+12025550143", "hashed_pass");
+        when(userRepository.findByEmailIgnoreCase("alice@example.com")).thenReturn(Optional.of(user));
+        when(otpService.generateAndSaveOtp("alice@example.com", "PASSWORD_RESET")).thenReturn("998877");
+
+        String msg = authService.forgotPassword(new ForgotPasswordRequest("alice@example.com"));
+
+        assertNotNull(msg);
+        verify(emailService).sendPasswordResetEmail("alice@example.com", "Alice", "998877");
+    }
+
+    @Test
+    void testForgotPassword_accountDoesNotExist_returnsGenericMessageWithoutEmail() {
+        when(userRepository.findByEmailIgnoreCase("unknown@example.com")).thenReturn(Optional.empty());
+
+        String msg = authService.forgotPassword(new ForgotPasswordRequest("unknown@example.com"));
+
+        assertNotNull(msg);
+        verifyNoInteractions(emailService);
+    }
+
+    @Test
+    void testResetPassword_success() {
+        User user = new User("Alice", "alice@example.com", "+12025550143", "old_hash");
+        user.setId(UUID.randomUUID());
+        when(otpService.verifyOtp("alice@example.com", "998877", "PASSWORD_RESET")).thenReturn(true);
+        when(userRepository.findByEmailIgnoreCase("alice@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("NewSecurePassword123!")).thenReturn("new_hash");
+        when(userDeviceRepository.findByUserIdAndIsActiveTrue(user.getId())).thenReturn(Collections.emptyList());
+
+        authService.resetPassword(new ResetPasswordRequest("alice@example.com", "998877", "NewSecurePassword123!"));
+
+        assertEquals("new_hash", user.getPasswordHash());
+        verify(userRepository).save(user);
+        verify(emailService).sendPasswordChangedNotification("alice@example.com", "Alice");
+    }
+
+    @Test
+    void testVerifyPhoneOtp_discontinuedThrowsBadRequest() {
+        assertThrows(BadRequestException.class, () -> authService.verifyPhoneOtp("+12025550143", "123456"));
     }
 
     @Test
@@ -142,4 +214,3 @@ public class AuthServiceTest {
         assertThrows(UnauthorizedException.class, () -> authService.login(req));
     }
 }
-

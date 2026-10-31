@@ -37,12 +37,45 @@ data class UserProfileDto(
     val phoneNumber: String,
     val avatarUrl: String?,
     val emailVerified: Boolean,
-    val phoneVerified: Boolean
+    val phoneVerified: Boolean,
+    val pendingEmail: String? = null,
+    val pendingPhoneNumber: String? = null,
+    val createdAt: String? = null
+)
+
+data class EmailChangeRequestDto(
+    val newEmail: String
+)
+
+data class VerifyEmailChangeRequestDto(
+    val token: String
+)
+
+data class PhoneChangeRequestDto(
+    val newPhoneNumber: String
+)
+
+data class VerifyPhoneChangeRequestDto(
+    val code: String
 )
 
 data class OtpVerificationDto(
     val identifier: String,
     val otpCode: String
+)
+
+data class ForgotPasswordRequestDto(
+    val email: String
+)
+
+data class ResetPasswordRequestDto(
+    val email: String,
+    val token: String,
+    val newPassword: String
+)
+
+data class ResendVerificationRequestDto(
+    val email: String
 )
 
 data class RefreshTokenDto(
@@ -217,6 +250,18 @@ data class IceCandidateDto(
     val sdpMid: String?,
     val sdpMLineIndex: Int,
     val candidate: String
+)
+
+data class IceServerDto(
+    val urls: List<String>,
+    val username: String? = null,
+    val credential: String? = null
+)
+
+data class IceConfigResponseDto(
+    val iceServers: List<IceServerDto>,
+    val ttl: Long,
+    val turnConfigured: Boolean
 )
 
 data class CallSessionResponseDto(

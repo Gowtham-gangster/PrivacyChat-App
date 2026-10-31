@@ -10,7 +10,10 @@ data class User(
     val phoneNumber: String,
     val avatarUrl: String?,
     val isEmailVerified: Boolean,
-    val isPhoneVerified: Boolean
+    val isPhoneVerified: Boolean,
+    val pendingEmail: String? = null,
+    val pendingPhoneNumber: String? = null,
+    val createdAt: String? = null
 )
 
 data class Conversation(

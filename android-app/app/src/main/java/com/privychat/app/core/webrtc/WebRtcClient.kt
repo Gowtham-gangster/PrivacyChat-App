@@ -55,15 +55,12 @@ class WebRtcClient(
         return localVideoTrack!!
     }
 
-    fun createPeerConnection(remoteVideoSink: VideoSink? = null) {
-        val iceServers = listOf(
-            PeerConnection.IceServer.builder(BuildConfig.STUN_SERVER).createIceServer(),
-            PeerConnection.IceServer.builder(BuildConfig.TURN_SERVER)
-                .setUsername("privychat_turn_user")
-                .setPassword("turn_secret")
-                .createIceServer()
-        )
-
+    fun createPeerConnection(
+        iceServers: List<PeerConnection.IceServer> = listOf(
+            PeerConnection.IceServer.builder(BuildConfig.STUN_SERVER).createIceServer()
+        ),
+        remoteVideoSink: VideoSink? = null
+    ) {
         val rtcConfig = PeerConnection.RTCConfiguration(iceServers).apply {
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
             continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY

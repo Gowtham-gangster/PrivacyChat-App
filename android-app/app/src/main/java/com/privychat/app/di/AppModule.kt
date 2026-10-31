@@ -90,6 +90,15 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideProfileRepository(
+        apiService: PrivyApiService,
+        preferences: UserPreferences
+    ): com.privychat.app.data.repository.ProfileRepository {
+        return com.privychat.app.data.repository.ProfileRepository(apiService, preferences)
+    }
+
+    @Provides
+    @Singleton
     fun provideConversationRepository(
         apiService: PrivyApiService,
         stompClient: StompWebSocketClient,

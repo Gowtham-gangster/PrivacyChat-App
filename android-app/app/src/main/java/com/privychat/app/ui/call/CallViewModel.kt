@@ -66,20 +66,23 @@ class CallViewModel @Inject constructor(
         rtcClient?.startLocalAudioTrack()
 
         if (!isIncoming) {
-            // Caller initiates offer
-            rtcClient?.createPeerConnection()
-            rtcClient?.createOffer { offerDesc ->
-                viewModelScope.launch {
-                    val signal = CallSignalDto(
-                        callId = callId,
-                        callerId = null,
-                        recipientId = UUID.randomUUID(),
-                        signalType = "OFFER",
-                        callType = callType,
-                        sdp = offerDesc.description,
-                        candidate = null
-                    )
-                    callRepository.sendCallSignal(signal)
+            // Caller fetches dynamic ICE servers and initiates offer
+            viewModelScope.launch {
+                val iceServers = callRepository.getIceServers()
+                rtcClient?.createPeerConnection(iceServers)
+                rtcClient?.createOffer { offerDesc ->
+                    viewModelScope.launch {
+                        val signal = CallSignalDto(
+                            callId = callId,
+                            callerId = null,
+                            recipientId = UUID.randomUUID(),
+                            signalType = "OFFER",
+                            callType = callType,
+                            sdp = offerDesc.description,
+                            candidate = null
+                        )
+                        callRepository.sendCallSignal(signal)
+                    }
                 }
             }
         }
@@ -87,8 +90,11 @@ class CallViewModel @Inject constructor(
 
     fun answerCall() {
         _callState.value = WebRtcClient.CallState.CONNECTING
-        rtcClient?.createPeerConnection()
-        // Respond to offer
+        viewModelScope.launch {
+            val iceServers = callRepository.getIceServers()
+            rtcClient?.createPeerConnection(iceServers)
+            // Respond to offer
+        }
     }
 
     fun toggleMute() {

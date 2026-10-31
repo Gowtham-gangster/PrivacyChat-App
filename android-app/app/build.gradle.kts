@@ -26,7 +26,6 @@ android {
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/v1/\"")
         buildConfigField("String", "WS_URL", "\"ws://10.0.2.2:8080/ws\"")
         buildConfigField("String", "STUN_SERVER", "\"stun:stun.l.google.com:19302\"")
-        buildConfigField("String", "TURN_SERVER", "\"turn:turn.privychat.example.com:3478\"")
     }
 
     signingConfigs {
@@ -130,6 +129,9 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
+
+    // Coil Image Loading
+    implementation(libs.coil.compose)
 
     // Testing
     testImplementation(libs.junit)

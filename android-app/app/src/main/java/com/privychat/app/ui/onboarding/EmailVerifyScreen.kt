@@ -22,11 +22,18 @@ fun EmailVerifyScreen(
 ) {
     var otpCode by remember { mutableStateOf("") }
     val authState by viewModel.authState.collectAsState()
+    var resendFeedback by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(authState) {
-        if (authState is AuthViewModel.AuthState.VerificationSuccess) {
-            viewModel.resetState()
-            onVerificationSuccess()
+        when (authState) {
+            is AuthViewModel.AuthState.VerificationSuccess -> {
+                viewModel.resetState()
+                onVerificationSuccess()
+            }
+            is AuthViewModel.AuthState.ResendSuccess -> {
+                resendFeedback = (authState as AuthViewModel.AuthState.ResendSuccess).message
+            }
+            else -> {}
         }
     }
 
@@ -49,18 +56,32 @@ fun EmailVerifyScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Enter the 6-digit verification code sent to:\n$email",
+                text = "Enter the 6-digit verification code sent via secure email to:\n$email",
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (resendFeedback != null) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
+                    Text(
+                        text = resendFeedback!!,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(12.dp),
+                        fontSize = 13.sp
+                    )
+                }
+            }
 
             if (authState is AuthViewModel.AuthState.Error) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                 ) {
                     Text(
                         text = (authState as AuthViewModel.AuthState.Error).message,
@@ -69,7 +90,6 @@ fun EmailVerifyScreen(
                         fontSize = 13.sp
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
             }
 
             OutlinedTextField(
@@ -82,7 +102,7 @@ fun EmailVerifyScreen(
                 shape = RoundedCornerShape(10.dp)
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = { viewModel.verifyEmail(email, otpCode) },
@@ -95,10 +115,18 @@ fun EmailVerifyScreen(
                 if (authState is AuthViewModel.AuthState.Loading) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Verify & Continue", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Verify & Activate", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(
+                onClick = { viewModel.resendVerification(email) },
+                enabled = authState !is AuthViewModel.AuthState.Loading
+            ) {
+                Text("Resend Verification Email")
             }
         }
     }
 }
-

@@ -15,8 +15,14 @@ interface PrivyApiService {
     @POST("auth/verify-email-otp")
     suspend fun verifyEmailOtp(@Body req: OtpVerificationDto): Response<Map<String, Boolean>>
 
-    @POST("auth/verify-phone-otp")
-    suspend fun verifyPhoneOtp(@Body req: OtpVerificationDto): Response<Map<String, Boolean>>
+    @POST("auth/resend-verification")
+    suspend fun resendVerification(@Body req: ResendVerificationRequestDto): Response<Map<String, String>>
+
+    @POST("auth/forgot-password")
+    suspend fun forgotPassword(@Body req: ForgotPasswordRequestDto): Response<Map<String, String>>
+
+    @POST("auth/reset-password")
+    suspend fun resetPassword(@Body req: ResetPasswordRequestDto): Response<Map<String, String>>
 
     @POST("auth/login")
     suspend fun login(@Body req: LoginRequestDto): Response<AuthResponseDto>
@@ -31,8 +37,30 @@ interface PrivyApiService {
     @GET("profile")
     suspend fun getProfile(): Response<UserProfileDto>
 
+    @PATCH("profile")
+    suspend fun patchProfile(@Body req: UpdateProfileDto): Response<UserProfileDto>
+
     @PUT("profile")
     suspend fun updateProfile(@Body req: UpdateProfileDto): Response<UserProfileDto>
+
+    @POST("profile/email-change")
+    suspend fun requestEmailChange(@Body req: EmailChangeRequestDto): Response<Map<String, String>>
+
+    @POST("profile/email-change/verify")
+    suspend fun verifyEmailChange(@Body req: VerifyEmailChangeRequestDto): Response<UserProfileDto>
+
+    @POST("profile/phone-change")
+    suspend fun requestPhoneChange(@Body req: PhoneChangeRequestDto): Response<Map<String, String>>
+
+    @POST("profile/phone-change/verify")
+    suspend fun verifyPhoneChange(@Body req: VerifyPhoneChangeRequestDto): Response<UserProfileDto>
+
+    @Multipart
+    @POST("profile/avatar")
+    suspend fun uploadAvatar(@Part file: okhttp3.MultipartBody.Part): Response<UserProfileDto>
+
+    @DELETE("profile/avatar")
+    suspend fun deleteAvatar(): Response<UserProfileDto>
 
     @GET("profile/privacy")
     suspend fun getPrivacySettings(): Response<PrivacySettingsDto>
@@ -96,6 +124,9 @@ interface PrivyApiService {
     suspend fun downloadCiphertextBytes(@Path("attachmentId") attachmentId: UUID): Response<ResponseBody>
 
     // Calls
+    @GET("calls/ice-servers")
+    suspend fun getIceServers(): Response<IceConfigResponseDto>
+
     @POST("calls/signal")
     suspend fun sendCallSignalRest(@Body signal: CallSignalDto): Response<Unit>
 

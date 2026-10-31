@@ -20,7 +20,13 @@
   - Safety number fingerprint verification (60-digit comparison and QR code exchange).
 - **Private Media & File Sharing**:
   - Encrypted locally on sender device using AES-256-GCM with random per-file keys.
-  - Transferred via private object storage (S3/MinIO); plaintext keys never touch the server.
+  - Transferred via private Supabase Storage (`privychat-attachments`); plaintext keys never touch the server.
+- **Profile Management & Identity Verification**:
+  - Jetpack Compose Material 3 Profile screen with Photo Picker and Camera integration.
+  - Profile image EXIF sanitization (automatic GPS and device metadata stripping) with private Supabase Storage object isolation.
+  - Secure 2-step Email Change: pending address validation, single-use token verification, and security alerts to old/new addresses.
+  - Secure 2-step Mobile Change: E.164 normalization, 6-digit OTP verification, rate limiting, and uniqueness enforcement.
+  - Centralized privacy controls governing avatar and last-seen visibility (Everyone, Contacts, Nobody).
 - **Voice & Video Real-Time Calling**:
   - WebRTC peer-to-peer media streams with SRTP encryption.
   - Authenticated STOMP/WebSocket signaling with ICE candidate exchange.

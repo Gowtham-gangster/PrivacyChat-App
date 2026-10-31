@@ -16,6 +16,9 @@ import com.privychat.app.ui.contacts.ContactsViewModel
 import com.privychat.app.ui.dashboard.ChatsDashboardScreen
 import com.privychat.app.ui.dashboard.ChatsDashboardViewModel
 import com.privychat.app.ui.onboarding.*
+import com.privychat.app.ui.profile.EditProfileScreen
+import com.privychat.app.ui.profile.ProfileScreen
+import com.privychat.app.ui.profile.ProfileViewModel
 import com.privychat.app.ui.settings.SafetyNumberScreen
 import com.privychat.app.ui.settings.SettingsScreen
 import com.privychat.app.ui.settings.SettingsViewModel
@@ -103,23 +106,6 @@ fun PrivyNavGraph(
             )
         }
 
-        composable(
-            route = Screen.PhoneVerify.route,
-            arguments = listOf(navArgument("phone") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val phone = backStackEntry.arguments?.getString("phone") ?: ""
-            val authViewModel: AuthViewModel = hiltViewModel()
-            PhoneVerifyScreen(
-                phone = phone,
-                viewModel = authViewModel,
-                onVerificationSuccess = {
-                    navController.navigate(Screen.Dashboard.route) {
-                        popUpTo(Screen.Welcome.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-
         composable(Screen.Dashboard.route) {
             val dashboardViewModel: ChatsDashboardViewModel = hiltViewModel()
             ChatsDashboardScreen(
@@ -130,8 +116,42 @@ fun PrivyNavGraph(
                 onNavigateToContacts = {
                     navController.navigate(Screen.Contacts.route)
                 },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route)
+                },
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
+                }
+            )
+        }
+
+        composable(Screen.Profile.route) {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+            ProfileScreen(
+                viewModel = profileViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToEditProfile = {
+                    navController.navigate(Screen.EditProfile.route)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route)
+                },
+                onLogout = {
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.EditProfile.route) {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+            EditProfileScreen(
+                viewModel = profileViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -198,6 +218,9 @@ fun PrivyNavGraph(
                 viewModel = settingsViewModel,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route)
                 },
                 onLoggedOut = {
                     navController.navigate(Screen.Welcome.route) {

@@ -23,6 +23,9 @@ class AuthViewModel @Inject constructor(
         data class RegisterSuccess(val email: String, val phone: String) : AuthState()
         data object LoginSuccess : AuthState()
         data object VerificationSuccess : AuthState()
+        data class PasswordResetRequested(val message: String) : AuthState()
+        data class PasswordResetSuccess(val message: String) : AuthState()
+        data class ResendSuccess(val message: String) : AuthState()
     }
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -72,14 +75,46 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun verifyPhone(phone: String, otp: String) {
+    fun resendVerification(email: String) {
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            val result = authRepository.verifyPhoneOtp(phone, otp)
-            result.onSuccess {
-                _authState.value = AuthState.VerificationSuccess
+            val result = authRepository.resendVerification(email)
+            result.onSuccess { msg ->
+                _authState.value = AuthState.ResendSuccess(msg)
             }.onFailure { err ->
-                _authState.value = AuthState.Error(err.message ?: "Verification failed")
+                _authState.value = AuthState.Error(err.message ?: "Failed to resend code")
+            }
+        }
+    }
+
+    fun forgotPassword(email: String) {
+        if (email.isBlank() || !email.contains("@")) {
+            _authState.value = AuthState.Error("Please enter a valid email address")
+            return
+        }
+        _authState.value = AuthState.Loading
+        viewModelScope.launch {
+            val result = authRepository.forgotPassword(email)
+            result.onSuccess { msg ->
+                _authState.value = AuthState.PasswordResetRequested(msg)
+            }.onFailure { err ->
+                _authState.value = AuthState.Error(err.message ?: "Failed to request password reset")
+            }
+        }
+    }
+
+    fun resetPassword(email: String, token: String, newPass: String) {
+        if (token.isBlank() || newPass.length < 8) {
+            _authState.value = AuthState.Error("Token is required and password must be at least 8 characters")
+            return
+        }
+        _authState.value = AuthState.Loading
+        viewModelScope.launch {
+            val result = authRepository.resetPassword(email, token, newPass)
+            result.onSuccess { msg ->
+                _authState.value = AuthState.PasswordResetSuccess(msg)
+            }.onFailure { err ->
+                _authState.value = AuthState.Error(err.message ?: "Failed to reset password")
             }
         }
     }
@@ -92,4 +127,3 @@ class AuthViewModel @Inject constructor(
         _authState.value = AuthState.Idle
     }
 }
-
