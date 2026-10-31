@@ -12,6 +12,8 @@
 secrets/
 credentials/
 google-services.json
+*firebase*.json
+**/firebase*.json
 
 # Java & Backend
 target/
