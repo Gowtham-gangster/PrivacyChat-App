@@ -11,6 +11,15 @@ android {
     namespace = "com.privychat.app"
     compileSdk = 34
 
+    val awsBaseUrl = project.findProperty("awsBaseUrl") as? String
+        ?: "http://privychat-env.eba-cj3jjvij.ap-south-1.elasticbeanstalk.com/api/v1/"
+    val awsWsUrl = project.findProperty("awsWsUrl") as? String
+        ?: "ws://privychat-env.eba-cj3jjvij.ap-south-1.elasticbeanstalk.com/ws"
+    val localBaseUrl = project.findProperty("localBaseUrl") as? String
+        ?: "http://10.0.2.2:8080/api/v1/"
+    val localWsUrl = project.findProperty("localWsUrl") as? String
+        ?: "ws://10.0.2.2:8080/ws"
+
     defaultConfig {
         applicationId = "com.privychat.app"
         minSdk = 26
@@ -23,9 +32,21 @@ android {
             useSupportLibrary = true
         }
 
-        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/api/v1/\"")
-        buildConfigField("String", "WS_URL", "\"ws://10.0.2.2:8080/ws\"")
         buildConfigField("String", "STUN_SERVER", "\"stun:stun.l.google.com:19302\"")
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            buildConfigField("String", "BASE_URL", "\"$localBaseUrl\"")
+            buildConfigField("String", "WS_URL", "\"$localWsUrl\"")
+        }
+        create("prod") {
+            dimension = "environment"
+            buildConfigField("String", "BASE_URL", "\"$awsBaseUrl\"")
+            buildConfigField("String", "WS_URL", "\"$awsWsUrl\"")
+        }
     }
 
     signingConfigs {
@@ -142,5 +163,11 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+tasks.register("testDebugUnitTest") {
+    description = "Runs unit tests for both devDebug and prodDebug variants"
+    group = "verification"
+    dependsOn("testDevDebugUnitTest", "testProdDebugUnitTest")
 }
 
