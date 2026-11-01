@@ -48,10 +48,11 @@ public class ProductionEnvironmentValidator implements ApplicationContextInitial
 
         if (!isProd && !isDevOrTest) {
             String activeProp = env.getProperty("spring.profiles.active");
-            if (activeProp != null) {
-                if (activeProp.contains("prod") || activeProp.contains("production")) {
+            if (activeProp != null && !activeProp.isBlank()) {
+                String lower = activeProp.toLowerCase();
+                if (lower.contains("prod") || lower.contains("production")) {
                     isProd = true;
-                } else if (activeProp.contains("dev") || activeProp.contains("test") || activeProp.contains("local")) {
+                } else if (lower.contains("dev") || lower.contains("test") || lower.contains("local")) {
                     isDevOrTest = true;
                 }
             } else {

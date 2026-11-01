@@ -15,12 +15,32 @@ public class ProductionEnvironmentValidatorTest {
 
     private final ProductionEnvironmentValidator validator = new ProductionEnvironmentValidator();
 
+    private StandardEnvironment createIsolatedEnvironment() {
+        StandardEnvironment env = new StandardEnvironment();
+        // Remove JVM system properties and OS environment variables so host/CI settings
+        // (such as -Dspring.profiles.active=test) do not leak into isolated unit tests
+        env.getPropertySources().remove(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME);
+        env.getPropertySources().remove(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
+        return env;
+    }
+
     @Test
     @DisplayName("In dev profile, validator passes even without remote database properties")
     void testDevProfileAllowsLocalhostAndMissingProperties() {
         GenericApplicationContext context = new GenericApplicationContext();
-        StandardEnvironment env = new StandardEnvironment();
+        StandardEnvironment env = createIsolatedEnvironment();
         env.setActiveProfiles("dev");
+        context.setEnvironment(env);
+
+        assertDoesNotThrow(() -> validator.initialize(context));
+    }
+
+    @Test
+    @DisplayName("In test profile, validator passes even without remote database properties")
+    void testTestProfileAllowsLocalhostAndMissingProperties() {
+        GenericApplicationContext context = new GenericApplicationContext();
+        StandardEnvironment env = createIsolatedEnvironment();
+        env.setActiveProfiles("test");
         context.setEnvironment(env);
 
         assertDoesNotThrow(() -> validator.initialize(context));
@@ -30,7 +50,7 @@ public class ProductionEnvironmentValidatorTest {
     @DisplayName("In prod profile, validator throws if DATABASE_URL is missing")
     void testProdProfileThrowsWhenDatabaseUrlMissing() {
         GenericApplicationContext context = new GenericApplicationContext();
-        StandardEnvironment env = new StandardEnvironment();
+        StandardEnvironment env = createIsolatedEnvironment();
         env.setActiveProfiles("prod");
         context.setEnvironment(env);
 
@@ -44,7 +64,7 @@ public class ProductionEnvironmentValidatorTest {
     @DisplayName("In prod profile, validator throws if DATABASE_URL points to localhost")
     void testProdProfileThrowsWhenDatabaseUrlPointsToLocalhost() {
         GenericApplicationContext context = new GenericApplicationContext();
-        StandardEnvironment env = new StandardEnvironment();
+        StandardEnvironment env = createIsolatedEnvironment();
         env.setActiveProfiles("prod");
 
         Map<String, Object> props = new HashMap<>();
@@ -70,7 +90,7 @@ public class ProductionEnvironmentValidatorTest {
     @DisplayName("In prod profile, validator passes when all required properties are configured for Supabase and SMTP")
     void testProdProfilePassesWithValidProperties() {
         GenericApplicationContext context = new GenericApplicationContext();
-        StandardEnvironment env = new StandardEnvironment();
+        StandardEnvironment env = createIsolatedEnvironment();
         env.setActiveProfiles("prod");
 
         Map<String, Object> props = new HashMap<>();
@@ -94,12 +114,11 @@ public class ProductionEnvironmentValidatorTest {
     @DisplayName("When no profile is specified, default is treated as prod and throws when database properties are missing")
     void testDefaultNoProfileTreatedAsProdAndThrowsWhenDatabaseUrlMissing() {
         GenericApplicationContext context = new GenericApplicationContext();
-        StandardEnvironment env = new StandardEnvironment();
-        // Do not set any active profile
+        StandardEnvironment env = createIsolatedEnvironment();
+        // Do not set any active profile or spring.profiles.active property
         context.setEnvironment(env);
 
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> validator.initialize(context));
         assertTrue(ex.getMessage().contains("DATABASE_URL"), "Error message should mention DATABASE_URL");
     }
 }
-
