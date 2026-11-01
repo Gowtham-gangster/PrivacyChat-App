@@ -107,7 +107,9 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                label = { Text("Mobile Phone (+12025550143)") },
+                label = { Text("Mobile Phone") },
+                placeholder = { Text("+919705067505") },
+                supportingText = { Text("Include country code (e.g. +91 9705067505 or 9705067505)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,

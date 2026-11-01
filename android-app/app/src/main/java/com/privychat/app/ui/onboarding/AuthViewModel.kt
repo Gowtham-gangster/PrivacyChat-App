@@ -32,13 +32,38 @@ class AuthViewModel @Inject constructor(
     val authState: StateFlow<AuthState> = _authState
 
     fun register(name: String, email: String, phone: String, pass: String, terms: Boolean) {
+        val trimmedName = name.trim()
+        val trimmedEmail = email.trim().lowercase()
+        val normalizedPhone = com.privychat.app.core.util.PhoneNumberHelper.formatToE164(phone)
+        val trimmedPass = pass
+
+        if (trimmedName.length < 2) {
+            _authState.value = AuthState.Error("Display name must be at least 2 characters")
+            return
+        }
+        if (trimmedEmail.isBlank() || !trimmedEmail.contains("@")) {
+            _authState.value = AuthState.Error("Please enter a valid email address")
+            return
+        }
+        if (normalizedPhone.isBlank()) {
+            _authState.value = AuthState.Error("Phone number is required")
+            return
+        }
+        if (!com.privychat.app.core.util.PhoneNumberHelper.isValidE164(normalizedPhone)) {
+            _authState.value = AuthState.Error("Phone number must be valid E.164 format (e.g. +919705067505 or +12025550143)")
+            return
+        }
+        if (trimmedPass.length < 8) {
+            _authState.value = AuthState.Error("Password must be at least 8 characters")
+            return
+        }
         if (!terms) {
-            _authState.value = AuthState.Error("You must accept the privacy policy")
+            _authState.value = AuthState.Error("You must accept the zero-knowledge terms & privacy policy")
             return
         }
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            val result = authRepository.register(name, email, phone, pass)
+            val result = authRepository.register(trimmedName, trimmedEmail, normalizedPhone, trimmedPass)
             result.onSuccess { user ->
                 _authState.value = AuthState.RegisterSuccess(user.email, user.phoneNumber)
             }.onFailure { err ->
