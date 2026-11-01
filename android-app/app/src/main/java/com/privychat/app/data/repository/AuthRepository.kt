@@ -21,9 +21,13 @@ class AuthRepository(
         pass: String
     ): Result<User> = withContext(Dispatchers.IO) {
         try {
-            val response = apiService.register(
-                RegisterRequestDto(displayName, email, phone, pass, true)
+            val reqDto = RegisterRequestDto(displayName, email, phone, pass, true)
+            val maskedPhone = if (phone.length > 5) phone.take(3) + "****" + phone.takeLast(2) else "****"
+            android.util.Log.d(
+                "AuthRepository",
+                "Register request fields: [displayName: present=${displayName.isNotBlank()}, email: present=${email.isNotBlank()}, phoneNumber: present=${phone.isNotBlank()} ($maskedPhone), password: present=${pass.isNotBlank()} (len=${pass.length}), termsAccepted=${reqDto.termsAccepted}]"
             )
+            val response = apiService.register(reqDto)
             if (response.isSuccessful && response.body() != null) {
                 val dto = response.body()!!
                 Result.success(

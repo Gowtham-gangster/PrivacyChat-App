@@ -17,9 +17,13 @@
 -dontwarn androidx.room.paging.**
 
 # Preserve Retrofit / Gson DTOs
--keepclassmembers,allowobfuscation class * {
+-keep class com.privychat.app.core.network.** { *; }
+-keepclassmembers class com.privychat.app.core.network.** { *; }
+-keepclassmembers class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
 -keepattributes Signature
 -keepattributes *Annotation*
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
 
