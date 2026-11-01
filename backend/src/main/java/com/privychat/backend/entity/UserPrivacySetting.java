@@ -1,12 +1,13 @@
 package com.privychat.backend.entity;
 
 import jakarta.persistence.*;
+import org.springframework.data.domain.Persistable;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "user_privacy_settings")
-public class UserPrivacySetting {
+public class UserPrivacySetting implements Persistable<UUID> {
 
     @Id
     @Column(name = "user_id")
@@ -29,12 +30,32 @@ public class UserPrivacySetting {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
+    @Transient
+    private boolean isNew = false;
+
     public UserPrivacySetting() {}
 
     public UserPrivacySetting(User user) {
         this.user = user;
         this.userId = user.getId();
         this.updatedAt = Instant.now();
+        this.isNew = true;
+    }
+
+    @Override
+    public UUID getId() {
+        return userId;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostPersist
+    @PostLoad
+    public void markNotNew() {
+        this.isNew = false;
     }
 
     public UUID getUserId() { return userId; }

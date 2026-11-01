@@ -1,12 +1,13 @@
 package com.privychat.backend.entity;
 
 import jakarta.persistence.*;
+import org.springframework.data.domain.Persistable;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "messages")
-public class Message {
+public class Message implements Persistable<UUID> {
 
     @Id
     private UUID id; // Client-generated UUID
@@ -67,6 +68,9 @@ public class Message {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
+    @Transient
+    private boolean isNew = false;
+
     public Message() {}
 
     public Message(UUID id, Conversation conversation, User sender, User recipient, 
@@ -80,6 +84,18 @@ public class Message {
         this.ratchetPublicKey = ratchetPublicKey;
         this.sequenceNumber = sequenceNumber;
         this.createdAt = Instant.now();
+        this.isNew = true;
+    }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostPersist
+    @PostLoad
+    public void markNotNew() {
+        this.isNew = false;
     }
 
     public UUID getId() { return id; }
