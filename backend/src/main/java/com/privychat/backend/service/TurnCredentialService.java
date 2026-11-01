@@ -4,6 +4,7 @@ import com.privychat.backend.dto.call.IceConfigResponse;
 import com.privychat.backend.dto.call.IceServerDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,7 @@ public class TurnCredentialService {
         this(stunServerUrl, turnEnabled, turnHost, turnPort, turnTlsPort, turnStaticSecret, turnRealm, ttlSeconds, "", "", "");
     }
 
+    @Autowired
     public TurnCredentialService(
             @Value("${privychat.webrtc.stun-server:stun:stun.l.google.com:19302}") String stunServerUrl,
             @Value("${privychat.webrtc.coturn.enabled:false}") boolean turnEnabled,
