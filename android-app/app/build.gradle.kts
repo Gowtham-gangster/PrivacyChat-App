@@ -12,9 +12,9 @@ android {
     compileSdk = 34
 
     val awsBaseUrl = project.findProperty("awsBaseUrl") as? String
-        ?: "http://privychat-env.eba-cj3jjvij.ap-south-1.elasticbeanstalk.com/api/v1/"
+        ?: "https://d3fv2w7uf8w2u4.cloudfront.net/api/v1/"
     val awsWsUrl = project.findProperty("awsWsUrl") as? String
-        ?: "ws://privychat-env.eba-cj3jjvij.ap-south-1.elasticbeanstalk.com/ws"
+        ?: "wss://d3fv2w7uf8w2u4.cloudfront.net/ws"
     val localBaseUrl = project.findProperty("localBaseUrl") as? String
         ?: "http://10.0.2.2:8080/api/v1/"
     val localWsUrl = project.findProperty("localWsUrl") as? String
